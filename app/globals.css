@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Tokens shadcn/ui derivados de la paleta Ludimente ──
+       Valores HSL para compatibilidad con shadcn. */
+    --background: 40 60% 98%; /* #FDFAF6 luda-blanco */
+    --foreground: 240 11% 32%; /* #4A4A5A luda-gris */
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 11% 32%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 11% 32%;
+
+    --primary: 273 47% 78%; /* #C9A8E0 luda-lila */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 339 71% 83%; /* #F2B5C8 luda-rosa */
+    --secondary-foreground: 240 11% 32%;
+
+    --muted: 270 50% 96%; /* lila-light suave */
+    --muted-foreground: 240 7% 51%; /* #7A7A8A luda-gris-light */
+
+    --accent: 208 56% 78%; /* #A8C8E8 luda-azul */
+    --accent-foreground: 240 11% 32%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 45% 90%;
+    --input: 270 45% 90%;
+    --ring: 270 40% 60%; /* #9B70C4 luda-lila-dark */
+
+    --radius: 0.875rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-luda-blanco text-luda-gris font-nunito antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-nunito;
+  }
+}
+
+@layer components {
+  /* Skeleton loaders en lila suave (no gris), según brief */
+  .skeleton-luda {
+    @apply animate-pulse rounded-lg bg-luda-lila-light/70;
+  }
+}
+
+/* Scrollbar sutil en tono lila */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #d9c6ee;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: #c9a8e0;
+}
