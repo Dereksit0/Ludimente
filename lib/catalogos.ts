@@ -83,3 +83,146 @@ export const ESTATUS_PACIENTE_OPCIONES = [
   { value: "alta", label: "Alta" },
   { value: "inactivo", label: "Inactivo" },
 ] as const;
+
+// ── Citas ──
+export const TIPO_CITA_OPCIONES = [
+  { value: "evaluacion_inicial", label: "Evaluación inicial" },
+  { value: "sesion_intervencion", label: "Sesión de intervención" },
+  { value: "devolucion_resultados", label: "Devolución de resultados" },
+  { value: "seguimiento", label: "Seguimiento" },
+  { value: "entrevista_padres", label: "Entrevista con padres" },
+  { value: "taller", label: "Taller" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const MODALIDAD_OPCIONES = [
+  { value: "presencial", label: "Presencial" },
+  { value: "videollamada", label: "Videollamada" },
+] as const;
+
+export const ESTATUS_CITA_OPCIONES = [
+  { value: "programada", label: "Programada" },
+  { value: "confirmada", label: "Confirmada" },
+  { value: "completada", label: "Completada" },
+  { value: "cancelada", label: "Cancelada" },
+  { value: "no_asistio", label: "No asistió" },
+  { value: "reagendada", label: "Reagendada" },
+] as const;
+
+/** Duraciones de cita en minutos. */
+export const DURACION_OPCIONES = [
+  { value: 30, label: "30 min" },
+  { value: 45, label: "45 min" },
+  { value: 50, label: "50 min" },
+  { value: 60, label: "1 hora" },
+  { value: 90, label: "1 hora 30 min" },
+] as const;
+
+// ── Pagos ──
+export const METODO_PAGO_OPCIONES = [
+  { value: "efectivo", label: "Efectivo" },
+  { value: "transferencia", label: "Transferencia" },
+  { value: "tarjeta_debito", label: "Tarjeta de débito" },
+  { value: "tarjeta_credito", label: "Tarjeta de crédito" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const ESTATUS_PAGO_OPCIONES = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "pagado", label: "Pagado" },
+  { value: "cancelado", label: "Cancelado" },
+  { value: "reembolsado", label: "Reembolsado" },
+] as const;
+
+/** Conceptos de pago frecuentes (autocompletado + libre). */
+export const CONCEPTOS_PAGO = [
+  "Evaluación inicial",
+  "Sesión de intervención",
+  "Seguimiento",
+  "Devolución de resultados",
+  "Entrevista con padres",
+  "Taller",
+  "Curso de verano",
+] as const;
+
+// ── Documentos ──
+export const TIPO_DOCUMENTO_OPCIONES = [
+  { value: "reporte_evaluacion", label: "Reporte de evaluación" },
+  { value: "nota_sesion", label: "Nota de sesión" },
+  { value: "consentimiento_informado", label: "Consentimiento informado" },
+  { value: "carta_referencia", label: "Carta de referencia" },
+  { value: "estudio_medico", label: "Estudio médico" },
+  { value: "credencial", label: "Credencial / identificación" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const TIPO_DOCUMENTO_LABEL: Record<string, string> = Object.fromEntries(
+  TIPO_DOCUMENTO_OPCIONES.map((d) => [d.value, d.label]),
+);
+
+// ── Sesiones (notas clínicas) ──
+export const AREA_TRABAJO_OPCIONES = [
+  { value: "lectura", label: "Lectura" },
+  { value: "escritura", label: "Escritura" },
+  { value: "matematicas", label: "Matemáticas" },
+  { value: "atencion", label: "Atención" },
+  { value: "memoria", label: "Memoria" },
+  { value: "lenguaje", label: "Lenguaje" },
+  { value: "socio_emocional", label: "Socioemocional" },
+  { value: "motor", label: "Motor" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const HUMOR_OPCIONES = [
+  { value: "muy_bien", label: "😄 Muy bien" },
+  { value: "bien", label: "🙂 Bien" },
+  { value: "regular", label: "😐 Regular" },
+  { value: "mal", label: "🙁 Mal" },
+  { value: "muy_mal", label: "😞 Muy mal" },
+] as const;
+
+export const AREA_TRABAJO_LABEL: Record<string, string> = Object.fromEntries(
+  AREA_TRABAJO_OPCIONES.map((a) => [a.value, a.label]),
+);
+
+// ── Evaluaciones ──
+export const TIPO_PRUEBA_OPCIONES = [
+  { value: "WISC-V", label: "WISC-V (Inteligencia 6-16)" },
+  { value: "WPPSI-IV", label: "WPPSI-IV (Inteligencia 2-7)" },
+  { value: "BENDER-II", label: "Bender-II (Visomotor)" },
+  { value: "PROLEC-R", label: "PROLEC-R (Lectura)" },
+  { value: "PROESC", label: "PROESC (Escritura)" },
+  { value: "TALE", label: "TALE (Lectura/Escritura)" },
+  { value: "ENFEN", label: "ENFEN (Funciones ejecutivas)" },
+  { value: "CONNERS-3", label: "Conners-3 (TDAH)" },
+  { value: "BASC-3", label: "BASC-3 (Conducta)" },
+  { value: "VINELAND-3", label: "Vineland-3 (Conducta adaptativa)" },
+  { value: "BAYLEY-4", label: "Bayley-4 (Desarrollo)" },
+  { value: "BEERY-VMI", label: "Beery-VMI (Visomotor)" },
+  { value: "STROOP", label: "Stroop (Atención)" },
+  { value: "TOUR", label: "Torre (Planificación)" },
+  { value: "OTRO", label: "Otro" },
+] as const;
+
+export const ESTATUS_EVALUACION_OPCIONES = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "en_proceso", label: "En proceso" },
+  { value: "calificada", label: "Calificada" },
+  { value: "entregada", label: "Entregada" },
+  { value: "archivada", label: "Archivada" },
+] as const;
+
+export const ESTATUS_EVALUACION_LABEL: Record<string, string> =
+  Object.fromEntries(ESTATUS_EVALUACION_OPCIONES.map((e) => [e.value, e.label]));
+
+/** Fortalezas y áreas de oportunidad sugeridas. */
+export const FORTALEZAS_SUGERIDAS = [
+  "Vocabulario",
+  "Memoria visual",
+  "Memoria auditiva",
+  "Razonamiento perceptual",
+  "Atención sostenida",
+  "Creatividad",
+  "Habilidades sociales",
+  "Motricidad fina",
+] as const;

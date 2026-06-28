@@ -1,0 +1,223 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+import { differenceInCalendarDays, format, isSameMonth } from "date-fns";
+import { es } from "date-fns/locale";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Download,
+  Receipt,
+  Search,
+  Wallet,
+} from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { LudaCard } from "@/components/ui/luda-card";
+import { LudaStat } from "@/components/ui/luda-stat";
+import { Select } from "@/components/ui/select";
+import { useConfiguracion } from "@/hooks/use-configuracion";
+import { useCobranza, useMarcarPago, type PagoCobranza } from "@/hooks/use-cobranza";
+import { ESTATUS_PAGO_OPCIONES } from "@/lib/catalogos";
+import { descargarCSV } from "@/lib/csv";
+import { imprimirRecibo } from "@/lib/print-recibo";
+import { ESTATUS_PAGO_CLASES, ESTATUS_PAGO_LABEL } from "@/types/app.types";
+import type { EstatusPago } from "@/types/database.types";
+
+const mx = (n: number) =>
+  `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
+
+/** Días que lleva pendiente un pago desde su creación. */
+const DIAS_VENCIDO = 15;
+function diasPendiente(p: PagoCobranza): number {
+  return differenceInCalendarDays(new Date(), new Date(p.created_at));
+}
+
+export function CobranzaCliente() {
+  const { data: pagos = [], isLoading } = useCobranza();
+  const { data: config } = useConfiguracion();
+  const marcar = useMarcarPago();
+  const [filtro, setFiltro] = useState<EstatusPago | "">("");
+  const [busqueda, setBusqueda] = useState("");
+
+  const visibles = useMemo(() => {
+    const q = busqueda.trim().toLowerCase();
+    return pagos
+      .filter((p) => (filtro ? p.estatus === filtro : true))
+      .filter((p) =>
+        q
+          ? p.paciente_nombre.toLowerCase().includes(q) ||
+            p.expediente.toLowerCase().includes(q) ||
+            p.concepto.toLowerCase().includes(q)
+          : true,
+      )
+      .sort((a, b) => {
+        // Pendientes primero, y dentro de ellos los más vencidos arriba.
+        const ap = a.estatus === "pendiente" ? 0 : 1;
+        const bp = b.estatus === "pendiente" ? 0 : 1;
+        if (ap !== bp) return ap - bp;
+        if (ap === 0) return diasPendiente(b) - diasPendiente(a);
+        return +new Date(b.created_at) - +new Date(a.created_at);
+      });
+  }, [pagos, filtro, busqueda]);
+
+  const totales = useMemo(() => {
+    const ahora = new Date();
+    let ingresosMes = 0;
+    let pendiente = 0;
+    let totalPagado = 0;
+    let vencido = 0;
+    for (const p of pagos) {
+      const monto = Number(p.monto_final ?? 0);
+      if (p.estatus === "pagado") {
+        totalPagado += monto;
+        if (p.fecha_pago && isSameMonth(new Date(p.fecha_pago), ahora))
+          ingresosMes += monto;
+      }
+      if (p.estatus === "pendiente") {
+        pendiente += monto;
+        if (diasPendiente(p) >= DIAS_VENCIDO) vencido += monto;
+      }
+    }
+    return { ingresosMes, pendiente, totalPagado, vencido };
+  }, [pagos]);
+
+  async function marcarPagado(id: string) {
+    await marcar.mutateAsync({ id, estatus: "pagado" });
+    toast.success("Pago marcado como pagado");
+  }
+
+  function exportar() {
+    descargarCSV(
+      `cobranza-${new Date().toISOString().slice(0, 10)}.csv`,
+      ["Paciente", "Expediente", "Concepto", "Monto", "Estatus", "Fecha"],
+      visibles.map((p) => [
+        p.paciente_nombre,
+        p.expediente,
+        p.concepto,
+        Number(p.monto_final ?? 0),
+        ESTATUS_PAGO_LABEL[p.estatus],
+        (p.fecha_pago ?? p.created_at).slice(0, 10),
+      ]),
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-fredoka text-3xl text-luda-gris">Cobranza</h1>
+
+      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <LudaStat label="Ingresos del mes" value={mx(totales.ingresosMes)} icon={Wallet} acento="lila" />
+        <LudaStat label="Por cobrar" value={mx(totales.pendiente)} icon={Clock} acento="rosa" />
+        <LudaStat label="Vencido (+15 días)" value={mx(totales.vencido)} icon={AlertTriangle} acento="amarillo" />
+        <LudaStat label="Total cobrado" value={mx(totales.totalPagado)} icon={CheckCircle2} acento="azul" />
+      </section>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-luda-gris-light" />
+          <Input
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            placeholder="Buscar paciente, expediente o concepto…"
+            className="h-9 pl-9 text-xs"
+          />
+        </div>
+        <Select
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value as EstatusPago | "")}
+          className="h-9 w-auto text-xs"
+        >
+          <option value="">Todos los estatus</option>
+          {ESTATUS_PAGO_OPCIONES.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </Select>
+        <span className="text-sm text-luda-gris-light">
+          {visibles.length} pago(s)
+        </span>
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-auto"
+          onClick={exportar}
+          disabled={visibles.length === 0}
+        >
+          <Download className="h-4 w-4" /> Exportar CSV
+        </Button>
+      </div>
+
+      {isLoading && <p className="text-sm text-luda-gris-light">Cargando…</p>}
+
+      <div className="space-y-2">
+        {visibles.map((p) => {
+          const dias = p.estatus === "pendiente" ? diasPendiente(p) : 0;
+          const vencido = dias >= DIAS_VENCIDO;
+          return (
+            <LudaCard
+              key={p.id}
+              className={`flex flex-wrap items-center gap-3 p-4 ${
+                vencido ? "border-l-4 border-l-yellow-400" : ""
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-luda-gris">
+                  {p.paciente_nombre}{" "}
+                  <span className="font-normal text-luda-gris-light">
+                    · {p.expediente}
+                  </span>
+                </p>
+                <p className="text-xs text-luda-gris-light">
+                  {p.concepto} ·{" "}
+                  {p.fecha_pago
+                    ? format(new Date(p.fecha_pago), "d 'de' MMM yyyy", { locale: es })
+                    : format(new Date(p.created_at), "d 'de' MMM yyyy", { locale: es })}
+                  {p.estatus === "pendiente" && dias > 0 && (
+                    <span className={vencido ? "font-semibold text-yellow-600" : ""}>
+                      {" "}· {dias} día(s) pendiente
+                    </span>
+                  )}
+                </p>
+              </div>
+              <p className="text-sm font-bold text-luda-gris">
+                {mx(Number(p.monto_final ?? 0))}
+              </p>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  ESTATUS_PAGO_CLASES[p.estatus]
+                }`}
+              >
+                {ESTATUS_PAGO_LABEL[p.estatus]}
+              </span>
+              {p.estatus === "pendiente" && (
+                <Button size="sm" variant="outline" onClick={() => marcarPagado(p.id)}>
+                  <CheckCircle2 className="h-4 w-4" /> Marcar pagado
+                </Button>
+              )}
+              {p.estatus === "pagado" && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => imprimirRecibo(p, p.paciente_nombre, config)}
+                >
+                  <Receipt className="h-4 w-4" /> Recibo
+                </Button>
+              )}
+            </LudaCard>
+          );
+        })}
+        {!isLoading && visibles.length === 0 && (
+          <LudaCard className="p-6">
+            <p className="text-sm text-luda-gris-light">No hay pagos.</p>
+          </LudaCard>
+        )}
+      </div>
+    </div>
+  );
+}

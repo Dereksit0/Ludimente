@@ -2,9 +2,10 @@
 
 import { usePathname } from "next/navigation";
 
-import { Search } from "lucide-react";
-
+import { BuscadorGlobal } from "./buscador-global";
+import { Campana } from "./campana";
 import { NAV_ITEMS } from "./nav-config";
+import { ThemeToggle } from "./theme-toggle";
 
 /** Deriva un título legible a partir del pathname. */
 function tituloDeRuta(pathname: string): string {
@@ -12,7 +13,6 @@ function tituloDeRuta(pathname: string): string {
     (i) => pathname === i.href || pathname.startsWith(`${i.href}/`),
   );
   if (item) return item.label;
-  if (pathname.startsWith("/agenda/recordatorios")) return "Recordatorios";
   return "Ludimente";
 }
 
@@ -31,17 +31,12 @@ export function Header() {
         <span className="font-bold text-luda-gris">{titulo}</span>
       </nav>
 
-      {/* Buscador global (Cmd+K llega en Fase 7) */}
-      <button
-        type="button"
-        className="flex items-center gap-2 rounded-xl border border-luda-lila/30 bg-white px-3 py-2 text-sm text-luda-gris-light transition-colors hover:border-luda-lila"
-      >
-        <Search className="h-4 w-4" />
-        <span className="hidden sm:inline">Buscar…</span>
-        <kbd className="ml-2 hidden rounded border border-luda-lila/30 px-1.5 text-xs sm:inline">
-          ⌘K
-        </kbd>
-      </button>
+      {/* Buscador global (⌘K) + notificaciones + tema */}
+      <div className="flex items-center gap-2">
+        <BuscadorGlobal />
+        <Campana />
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

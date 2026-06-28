@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { Estrella, LudiMascota } from "@/components/ui/ludi-mascota";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-import { LoginForm } from "./login-form";
+import { LoginForm, type UsuarioLogin } from "./login-form";
 
 export const metadata: Metadata = { title: "Iniciar sesión · Ludimente" };
+
+// La lista del equipo no cambia entre requests; se cachea unos minutos.
+export const revalidate = 300;
 
 export default async function LoginPage() {
   // Si ya hay sesión activa, no mostrar el login.
@@ -16,10 +20,20 @@ export default async function LoginPage() {
   } = await supabase.auth.getUser();
   if (user) redirect("/dashboard");
 
+  // Equipo activo para el selector (solo datos no sensibles).
+  const admin = createAdminClient();
+  const { data: equipo } = await admin
+    .from("profiles")
+    .select("usuario, full_name, role")
+    .eq("activo", true)
+    .order("full_name");
+
+  const usuarios: UsuarioLogin[] = equipo ?? [];
+
   return (
     <main className="grid min-h-screen grid-cols-1 bg-luda-fondo lg:grid-cols-2">
       <div className="flex items-center justify-center p-6 sm:p-10">
-        <LoginForm />
+        <LoginForm usuarios={usuarios} />
       </div>
 
       {/* Panel derecho mágico con Ludi */}

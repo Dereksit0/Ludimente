@@ -25,7 +25,7 @@ export type CitaConRelaciones = Cita & {
 // ── Metadatos de UI: etiquetas en español por rol/estatus ──
 export const ROL_LABEL: Record<Rol, string> = {
   admin: "Administrador",
-  psicologo: "Psicólogo/a",
+  psicologo: "Terapeuta",
   recepcionista: "Recepción",
 };
 
@@ -48,6 +48,16 @@ export const ESTATUS_PACIENTE_CLASES: Record<EstatusPaciente, string> = {
   seguimiento: "bg-yellow-50 text-yellow-700 border-yellow-200",
   alta: "bg-gray-50 text-gray-600 border-gray-200",
   inactivo: "bg-red-50 text-red-600 border-red-200",
+};
+
+export const TIPO_CITA_LABEL: Record<string, string> = {
+  evaluacion_inicial: "Evaluación inicial",
+  sesion_intervencion: "Sesión de intervención",
+  devolucion_resultados: "Devolución de resultados",
+  seguimiento: "Seguimiento",
+  entrevista_padres: "Entrevista con padres",
+  taller: "Taller",
+  otro: "Otro",
 };
 
 export const ESTATUS_CITA_LABEL: Record<EstatusCita, string> = {

@@ -27,24 +27,32 @@ declare
   v_pass    text := crypt('Ludimente2026!', gen_salt('bf'));
 begin
   -- Insertar en auth.users solo si no existen
+  -- Nota: las columnas de token van en '' (no NULL); GoTrue falla con 500
+  -- al iniciar sesión si encuentra NULL en estas columnas.
   insert into auth.users (
     id, instance_id, aud, role, email, encrypted_password,
     email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-    created_at, updated_at
+    created_at, updated_at,
+    confirmation_token, recovery_token, email_change,
+    email_change_token_new, email_change_token_current,
+    phone_change, phone_change_token, reauthentication_token
   )
   values
     (v_admin, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'admin@acceso.ludimente.mx', v_pass, now(),
      '{"provider":"email","providers":["email"]}',
-     '{"usuario":"admin","full_name":"Dirección Ludimente","role":"admin"}', now(), now()),
+     '{"usuario":"admin","full_name":"Dirección Ludimente","role":"admin"}', now(), now(),
+     '', '', '', '', '', '', '', ''),
     (v_psico, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'ana.martinez@acceso.ludimente.mx', v_pass, now(),
      '{"provider":"email","providers":["email"]}',
-     '{"usuario":"ana.martinez","full_name":"Psic. Ana Martínez","role":"psicologo"}', now(), now()),
+     '{"usuario":"ana.martinez","full_name":"Psic. Ana Martínez","role":"psicologo"}', now(), now(),
+     '', '', '', '', '', '', '', ''),
     (v_recep, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
      'recepcion@acceso.ludimente.mx', v_pass, now(),
      '{"provider":"email","providers":["email"]}',
-     '{"usuario":"recepcion","full_name":"Recepción Ludimente","role":"recepcionista"}', now(), now())
+     '{"usuario":"recepcion","full_name":"Recepción Ludimente","role":"recepcionista"}', now(), now(),
+     '', '', '', '', '', '', '', '')
   on conflict (id) do nothing;
 
   -- Asegurar profiles (por si el trigger no estuviera activo)

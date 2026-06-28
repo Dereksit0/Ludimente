@@ -5,14 +5,23 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { ExpedienteHeader } from "@/components/pacientes/expediente-header";
+import { CitasTab } from "@/components/pacientes/tabs/citas-tab";
+import { DocumentosTab } from "@/components/pacientes/tabs/documentos-tab";
+import { EvaluacionesTab } from "@/components/pacientes/tabs/evaluaciones-tab";
 import { InfoTab } from "@/components/pacientes/tabs/info-tab";
+import { PagosTab } from "@/components/pacientes/tabs/pagos-tab";
+import { PortalTab } from "@/components/pacientes/tabs/portal-tab";
+import { SesionesTab } from "@/components/pacientes/tabs/sesiones-tab";
+import { TimelineTab } from "@/components/pacientes/tabs/timeline-tab";
 import { TutoresTab } from "@/components/pacientes/tabs/tutores-tab";
-import { Proximamente } from "@/components/ui/proximamente";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePaciente } from "@/hooks/use-pacientes";
+import { useRolActual } from "@/hooks/use-rol";
 
 export function ExpedienteCliente({ id }: { id: string }) {
   const { data: paciente, isLoading, isError } = usePaciente(id);
+  const { data: rol } = useRolActual();
+  const esAdmin = rol === "admin";
 
   if (isLoading) {
     return (
@@ -41,12 +50,14 @@ export function ExpedienteCliente({ id }: { id: string }) {
 
   return (
     <div className="space-y-2">
-      <Link
-        href="/pacientes"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-luda-gris-light hover:text-luda-lila-dark"
-      >
-        <ArrowLeft className="h-4 w-4" /> Pacientes
-      </Link>
+      <div className="mx-auto max-w-5xl">
+        <Link
+          href="/pacientes"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-luda-gris-light hover:text-luda-lila-dark"
+        >
+          <ArrowLeft className="h-4 w-4" /> Pacientes
+        </Link>
+      </div>
 
       <ExpedienteHeader paciente={paciente} />
 
@@ -54,38 +65,44 @@ export function ExpedienteCliente({ id }: { id: string }) {
         <Tabs defaultValue="info">
           <TabsList>
             <TabsTrigger value="info">Información</TabsTrigger>
+            <TabsTrigger value="timeline">Línea de tiempo</TabsTrigger>
             <TabsTrigger value="tutores">Tutores</TabsTrigger>
             <TabsTrigger value="citas">Citas</TabsTrigger>
             <TabsTrigger value="sesiones">Sesiones</TabsTrigger>
             <TabsTrigger value="evaluaciones">Evaluaciones</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
-            <TabsTrigger value="pagos">Pagos</TabsTrigger>
-            <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+            {esAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
+            <TabsTrigger value="portal">Portal</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info">
             <InfoTab paciente={paciente} />
           </TabsContent>
+          <TabsContent value="timeline">
+            <TimelineTab paciente={paciente} />
+          </TabsContent>
           <TabsContent value="tutores">
             <TutoresTab paciente={paciente} />
           </TabsContent>
           <TabsContent value="citas">
-            <Proximamente titulo="Citas" fase="Fase 3" />
+            <CitasTab paciente={paciente} />
           </TabsContent>
           <TabsContent value="sesiones">
-            <Proximamente titulo="Sesiones" fase="Fase 4" />
+            <SesionesTab paciente={paciente} />
           </TabsContent>
           <TabsContent value="evaluaciones">
-            <Proximamente titulo="Evaluaciones" fase="Fase 4" />
+            <EvaluacionesTab paciente={paciente} />
           </TabsContent>
           <TabsContent value="documentos">
-            <Proximamente titulo="Documentos" fase="Fase 2+" />
+            <DocumentosTab paciente={paciente} />
           </TabsContent>
-          <TabsContent value="pagos">
-            <Proximamente titulo="Pagos" fase="Fase 5" />
-          </TabsContent>
-          <TabsContent value="whatsapp">
-            <Proximamente titulo="WhatsApp" fase="Fase 3" />
+          {esAdmin && (
+            <TabsContent value="pagos">
+              <PagosTab paciente={paciente} />
+            </TabsContent>
+          )}
+          <TabsContent value="portal">
+            <PortalTab paciente={paciente} />
           </TabsContent>
         </Tabs>
       </div>

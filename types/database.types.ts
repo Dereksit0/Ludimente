@@ -285,6 +285,7 @@ export interface Database {
           borrador: boolean;
           auto_guardado_at: string | null;
           finalizada_at: string | null;
+          deleted_at: string | null;
         } & Timestamps;
         Insert: {
           id?: string;
@@ -308,6 +309,7 @@ export interface Database {
           borrador?: boolean;
           auto_guardado_at?: string | null;
           finalizada_at?: string | null;
+          deleted_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["sesiones"]["Insert"]>;
         Relationships: [];
@@ -331,6 +333,7 @@ export interface Database {
           areas_oportunidad: string[] | null;
           recomendaciones: string | null;
           estatus: EstatusEvaluacion;
+          deleted_at: string | null;
         } & Timestamps;
         Insert: {
           id?: string;
@@ -350,6 +353,7 @@ export interface Database {
           areas_oportunidad?: string[] | null;
           recomendaciones?: string | null;
           estatus?: EstatusEvaluacion;
+          deleted_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["evaluaciones"]["Insert"]>;
         Relationships: [];
@@ -524,6 +528,132 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["configuracion"]["Row"]>;
         Relationships: [];
       };
+      paquetes: {
+        Row: {
+          id: string;
+          nombre: string;
+          num_sesiones: number;
+          precio: number;
+          activo: boolean;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          nombre: string;
+          num_sesiones: number;
+          precio: number;
+          activo?: boolean;
+        };
+        Update: Partial<Database["public"]["Tables"]["paquetes"]["Insert"]>;
+        Relationships: [];
+      };
+      paquetes_paciente: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          paquete_id: string | null;
+          nombre: string;
+          sesiones_totales: number;
+          sesiones_usadas: number;
+          precio_total: number;
+          fecha: string | null;
+          notas: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          paquete_id?: string | null;
+          nombre: string;
+          sesiones_totales: number;
+          sesiones_usadas?: number;
+          precio_total: number;
+          fecha?: string | null;
+          notas?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["paquetes_paciente"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      abonos: {
+        Row: {
+          id: string;
+          paquete_paciente_id: string;
+          monto: number;
+          metodo_pago: string;
+          fecha: string;
+          referencia: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          paquete_paciente_id: string;
+          monto: number;
+          metodo_pago?: string;
+          fecha?: string;
+          referencia?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["abonos"]["Insert"]>;
+        Relationships: [];
+      };
+      solicitudes_cita: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          tutor_id: string | null;
+          fecha_preferida: string | null;
+          nota: string | null;
+          estatus: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          tutor_id?: string | null;
+          fecha_preferida?: string | null;
+          nota?: string | null;
+          estatus?: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["solicitudes_cita"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      notificaciones: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          rol: string | null;
+          titulo: string;
+          mensaje: string | null;
+          tipo: string;
+          enlace: string | null;
+          leida: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          rol?: string | null;
+          titulo: string;
+          mensaje?: string | null;
+          tipo?: string;
+          enlace?: string | null;
+          leida?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["notificaciones"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -538,6 +668,28 @@ export interface Database {
       auth_role: { Args: Record<string, never>; Returns: string };
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_clinico: { Args: Record<string, never>; Returns: boolean };
+      portal_gen_codigo: { Args: Record<string, never>; Returns: string };
+      portal_generar_acceso: {
+        Args: { p_tutor_id: string; p_paciente_id: string; p_pin: string };
+        Returns: string;
+      };
+      portal_login: {
+        Args: { p_codigo: string; p_pin: string };
+        Returns: {
+          acceso_id: string;
+          pac_id: string;
+          pac_nombre: string;
+          tut_nombre: string;
+        }[];
+      };
+      registrar_vista_expediente: {
+        Args: { p_paciente_id: string };
+        Returns: undefined;
+      };
+      generar_cobro_cita: {
+        Args: { p_cita_id: string; p_paciente_id: string; p_concepto: string };
+        Returns: undefined;
+      };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };

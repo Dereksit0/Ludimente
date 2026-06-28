@@ -7,6 +7,8 @@ import type { Rol } from "@/types/database.types";
 // Rutas del sistema restringidas por rol. Si el rol no está en la lista,
 // se redirige a su pantalla de inicio.
 const RESTRICCIONES: { prefijo: string; roles: Rol[] }[] = [
+  { prefijo: "/cobranza", roles: ["admin"] },
+  { prefijo: "/evaluaciones", roles: ["admin", "psicologo"] },
   { prefijo: "/reportes", roles: ["admin", "psicologo"] },
   { prefijo: "/configuracion", roles: ["admin"] },
   { prefijo: "/dashboard", roles: ["admin", "psicologo", "recepcionista"] },
@@ -28,21 +30,19 @@ export async function middleware(request: NextRequest) {
 
   // Con sesión: aplicar restricciones por rol.
   if (user && !esRutaPublica) {
-    const { data: perfil } = await supabase
-      .from("profiles")
-      .select("role, activo")
-      .eq("id", user.id)
-      .single();
+    // Rol y estado se leen del token (app_metadata), sin consultar la BD.
+    // Esto evita una llamada de red por cada navegación (ver migración 007).
+    const meta = user.app_metadata ?? {};
 
     // Usuario desactivado → cerrar sesión.
-    if (perfil && !perfil.activo) {
+    if (meta.activo === false) {
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
 
-    const rol = (perfil?.role ?? "recepcionista") as Rol;
+    const rol = ((meta.role as Rol | undefined) ?? "recepcionista") as Rol;
     const restriccion = RESTRICCIONES.find((r) =>
       pathname.startsWith(r.prefijo),
     );

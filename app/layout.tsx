@@ -38,7 +38,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es-MX" className={`${fredoka.variable} ${nunito.variable}`}>
+    <html
+      lang="es-MX"
+      className={`${fredoka.variable} ${nunito.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Aplica el tema guardado antes de pintar (evita parpadeo). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('tema')==='oscuro')document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="font-nunito">
         <Providers>{children}</Providers>
       </body>

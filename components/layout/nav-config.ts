@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Settings,
   Users,
+  Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/pacientes", label: "Pacientes", icon: Users, mobile: true },
   { href: "/agenda", label: "Agenda", icon: Calendar, mobile: true },
   { href: "/evaluaciones", label: "Evaluaciones", icon: ClipboardList, roles: ["admin", "psicologo"] },
+  { href: "/cobranza", label: "Cobranza", icon: Wallet, roles: ["admin"] },
   { href: "/reportes", label: "Reportes", icon: FileBarChart, roles: ["admin", "psicologo"] },
   { href: "/configuracion", label: "Configuración", icon: Settings, roles: ["admin"] },
 ];

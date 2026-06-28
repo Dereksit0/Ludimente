@@ -65,6 +65,9 @@ export function usePaciente(id: string) {
         .single();
       if (error) throw error;
 
+      // Auditoría de acceso al expediente (fire-and-forget).
+      void supabase.rpc("registrar_vista_expediente", { p_paciente_id: id });
+
       const { data: tutores } = await supabase
         .from("tutores")
         .select("*")

@@ -59,6 +59,40 @@
   }
 }
 
+/* ── Modo oscuro (baseline): remapea las superficies de marca ── */
+.dark body {
+  background-color: #15121d;
+  color: #e6e1ef;
+}
+.dark .bg-white {
+  background-color: #211b2e !important;
+}
+.dark .bg-luda-blanco {
+  background-color: #15121d !important;
+}
+.dark .bg-luda-fondo,
+.dark .bg-luda-fondo\/80 {
+  background-color: #1b1626 !important;
+}
+.dark .bg-luda-lila-light,
+.dark .bg-luda-lila-light\/40,
+.dark .bg-luda-lila-light\/50,
+.dark .bg-luda-lila-light\/70 {
+  background-color: #2c2440 !important;
+}
+.dark .text-luda-gris {
+  color: #e6e1ef !important;
+}
+.dark .text-luda-gris-light {
+  color: #a79fbb !important;
+}
+.dark .border-luda-lila\/15,
+.dark .border-luda-lila\/10,
+.dark .border-luda-lila\/20,
+.dark .border-luda-lila\/30 {
+  border-color: rgba(201, 168, 224, 0.22) !important;
+}
+
 /* Scrollbar sutil en tono lila */
 ::-webkit-scrollbar {
   width: 10px;

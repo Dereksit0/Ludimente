@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 import { logoutAction } from "@/app/(auth)/login/actions";
 import { LudaAvatar } from "@/components/ui/luda-avatar";
@@ -16,10 +16,9 @@ import { navParaRol } from "./nav-config";
 
 interface SidebarProps {
   perfil: Pick<Perfil, "full_name" | "role" | "avatar_url">;
-  recordatoriosPendientes?: number;
 }
 
-export function Sidebar({ perfil, recordatoriosPendientes = 0 }: SidebarProps) {
+export function Sidebar({ perfil }: SidebarProps) {
   const pathname = usePathname();
   const items = navParaRol(perfil.role);
 
@@ -61,28 +60,6 @@ export function Sidebar({ perfil, recordatoriosPendientes = 0 }: SidebarProps) {
             </Link>
           );
         })}
-
-        {/* Recordatorios WhatsApp pendientes */}
-        <Link
-          href="/agenda/recordatorios"
-          className={cn(
-            "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
-            pathname.startsWith("/agenda/recordatorios")
-              ? "bg-luda-lila text-white shadow-luda"
-              : "text-luda-gris hover:bg-luda-lila-light",
-          )}
-        >
-          <span className="flex items-center gap-3">
-            <Bell className="h-5 w-5" />
-            Recordatorios
-          </span>
-          {recordatoriosPendientes > 0 && (
-            <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
-              {recordatoriosPendientes}
-              <span className="absolute inset-0 animate-ping-luda rounded-full bg-red-400" />
-            </span>
-          )}
-        </Link>
       </nav>
 
       {/* Footer: usuario */}
