@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   addDays,
@@ -108,6 +108,10 @@ export function AgendaCliente() {
   const [editando, setEditando] = useState<CitaConRelaciones | null>(null);
   const [inicialNueva, setInicialNueva] = useState<Partial<CitaInput>>();
   const [repetirSemanas, setRepetirSemanas] = useState(0);
+  // La agenda depende de la fecha/hora actual; se monta en cliente para
+  // evitar discrepancias de hidratación entre el servidor y el navegador.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
   const [detalle, setDetalle] = useState<CitaConRelaciones | null>(null);
   const [notaPara, setNotaPara] = useState<CitaConRelaciones | null>(null);
   const [motivoPara, setMotivoPara] = useState<{
@@ -316,6 +320,17 @@ export function AgendaCliente() {
     } catch {
       toast.error("No se pudo guardar la nota");
     }
+  }
+
+  if (!montado) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="font-fredoka text-3xl text-luda-gris">Agenda</h1>
+        </div>
+        <p className="text-sm text-luda-gris-light">Cargando agenda…</p>
+      </div>
+    );
   }
 
   return (
