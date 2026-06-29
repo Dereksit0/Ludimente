@@ -1,7 +1,11 @@
 import type {
+  AreaObjetivo,
   EstatusCita,
+  EstatusObjetivo,
   EstatusPaciente,
   EstatusPago,
+  EstatusPlan,
+  PrioridadObjetivo,
   Rol,
   Tables,
 } from "@/types/database.types";
@@ -90,6 +94,58 @@ export const ESTATUS_PAGO_CLASES: Record<EstatusPago, string> = {
   pagado: "bg-green-50 text-green-700",
   cancelado: "bg-red-50 text-red-600",
   reembolsado: "bg-gray-50 text-gray-600",
+};
+
+// ── Plan de intervención ──
+export const ESTATUS_PLAN_LABEL: Record<EstatusPlan, string> = {
+  activo: "Activo",
+  pausado: "Pausado",
+  completado: "Completado",
+  cancelado: "Cancelado",
+};
+
+export const ESTATUS_PLAN_CLASES: Record<EstatusPlan, string> = {
+  activo: "bg-green-50 text-green-700 border-green-200",
+  pausado: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  completado: "bg-luda-lila-light text-luda-lila-dark border-luda-lila",
+  cancelado: "bg-gray-50 text-gray-600 border-gray-200",
+};
+
+export const AREA_OBJETIVO_LABEL: Record<AreaObjetivo, string> = {
+  lenguaje: "Lenguaje",
+  aprendizaje: "Aprendizaje",
+  conducta: "Conducta",
+  motriz: "Motriz",
+  socioemocional: "Socioemocional",
+  atencion: "Atención",
+  autonomia: "Autonomía",
+  otro: "Otro",
+};
+
+export const PRIORIDAD_OBJETIVO_LABEL: Record<PrioridadObjetivo, string> = {
+  alta: "Alta",
+  media: "Media",
+  baja: "Baja",
+};
+
+export const PRIORIDAD_OBJETIVO_CLASES: Record<PrioridadObjetivo, string> = {
+  alta: "bg-red-50 text-red-600 border-red-200",
+  media: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  baja: "bg-blue-50 text-blue-700 border-blue-200",
+};
+
+export const ESTATUS_OBJETIVO_LABEL: Record<EstatusObjetivo, string> = {
+  pendiente: "Pendiente",
+  en_progreso: "En progreso",
+  logrado: "Logrado",
+  no_logrado: "No logrado",
+};
+
+export const ESTATUS_OBJETIVO_CLASES: Record<EstatusObjetivo, string> = {
+  pendiente: "bg-gray-50 text-gray-600 border-gray-200",
+  en_progreso: "bg-blue-50 text-blue-700 border-blue-200",
+  logrado: "bg-green-50 text-green-700 border-green-200",
+  no_logrado: "bg-red-50 text-red-600 border-red-200",
 };
 
 /** Ruta de aterrizaje por rol tras el login. */

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { TutorForm } from "@/components/pacientes/tutor-form";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
 import {
@@ -38,6 +39,7 @@ export function TutoresTab({ paciente }: { paciente: PacienteDetalle }) {
   const crear = useCrearTutor(paciente.id);
   const actualizar = useActualizarTutor(paciente.id);
   const eliminar = useEliminarTutor(paciente.id);
+  const confirmar = useConfirm();
 
   const [modalAbierto, setModalAbierto] = useState(false);
   const [editando, setEditando] = useState<Tutor | null>(null);
@@ -74,8 +76,14 @@ export function TutoresTab({ paciente }: { paciente: PacienteDetalle }) {
     }
   }
 
-  function onEliminar(t: Tutor) {
-    if (!confirm(`¿Eliminar a ${t.nombre_completo}?`)) return;
+  async function onEliminar(t: Tutor) {
+    const ok = await confirmar({
+      titulo: "Eliminar tutor",
+      mensaje: `¿Eliminar a ${t.nombre_completo} de los tutores?`,
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     eliminar.mutate(t.id, {
       onSuccess: () => toast.success("Tutor eliminado"),
       onError: () => toast.error("No se pudo eliminar el tutor."),

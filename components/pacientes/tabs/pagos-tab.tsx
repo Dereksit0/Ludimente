@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
@@ -132,6 +133,7 @@ export function PagosTab({ paciente }: { paciente: PacienteDetalle }) {
   const { data: config } = useConfiguracion();
   const crear = useCrearPago(paciente.id);
   const eliminar = useEliminarPago(paciente.id);
+  const confirmar = useConfirm();
   const [abierto, setAbierto] = useState(false);
   const nombrePaciente = `${paciente.nombre} ${paciente.apellido_paterno}`;
 
@@ -153,7 +155,13 @@ export function PagosTab({ paciente }: { paciente: PacienteDetalle }) {
   }
 
   async function borrar(p: Pago) {
-    if (!window.confirm("¿Eliminar este pago?")) return;
+    const ok = await confirmar({
+      titulo: "Eliminar pago",
+      mensaje: "¿Eliminar este pago del expediente?",
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     await eliminar.mutateAsync(p.id);
     toast.success("Pago eliminado");
   }

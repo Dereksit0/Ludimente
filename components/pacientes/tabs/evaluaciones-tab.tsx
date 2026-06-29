@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Comparativa } from "@/components/evaluaciones/comparativa";
 import { EvaluacionForm } from "@/components/evaluaciones/evaluacion-form";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
 import {
@@ -44,6 +45,7 @@ export function EvaluacionesTab({ paciente }: { paciente: PacienteDetalle }) {
   const crear = useCrearEvaluacion();
   const actualizar = useActualizarEvaluacion();
   const eliminar = useEliminarEvaluacion();
+  const confirmar = useConfirm();
 
   const [abierto, setAbierto] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -102,7 +104,13 @@ export function EvaluacionesTab({ paciente }: { paciente: PacienteDetalle }) {
     imprimirEvaluacion(d, `${paciente.nombre} ${paciente.apellido_paterno}`);
   }
   async function borrar(id: string) {
-    if (!window.confirm("¿Eliminar esta evaluación?")) return;
+    const ok = await confirmar({
+      titulo: "Eliminar evaluación",
+      mensaje: "¿Eliminar esta evaluación? Esta acción no se puede deshacer.",
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     await eliminar.mutateAsync(id);
     toast.success("Evaluación eliminada");
   }

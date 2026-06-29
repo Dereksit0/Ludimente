@@ -2,6 +2,9 @@
 
 import { usePathname } from "next/navigation";
 
+import { LudiMascota } from "@/components/ui/ludi-mascota";
+import type { Rol } from "@/types/database.types";
+
 import { BuscadorGlobal } from "./buscador-global";
 import { Campana } from "./campana";
 import { NAV_ITEMS } from "./nav-config";
@@ -16,14 +19,14 @@ function tituloDeRuta(pathname: string): string {
   return "Ludimente";
 }
 
-export function Header() {
+export function Header({ rol }: { rol: Rol }) {
   const pathname = usePathname();
   const titulo = tituloDeRuta(pathname);
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-luda-lila/15 bg-luda-blanco/80 px-4 backdrop-blur md:px-8">
-      <h1 className="font-fredoka text-xl text-luda-gris md:hidden">
-        🐙 {titulo}
+      <h1 className="flex items-center gap-2 font-fredoka text-xl text-luda-gris md:hidden">
+        <LudiMascota className="h-7 w-7 shrink-0" /> {titulo}
       </h1>
       <nav aria-label="Migas de pan" className="hidden text-sm md:block">
         <span className="font-semibold text-luda-gris-light">Ludimente</span>
@@ -33,7 +36,7 @@ export function Header() {
 
       {/* Buscador global (⌘K) + notificaciones + tema */}
       <div className="flex items-center gap-2">
-        <BuscadorGlobal />
+        <BuscadorGlobal rol={rol} />
         <Campana />
         <ThemeToggle />
       </div>

@@ -6,7 +6,10 @@ import { Package, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
+import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import type { PacienteDetalle } from "@/hooks/use-pacientes";
 import {
@@ -28,6 +31,8 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
   const usar = useUsarSesion(paciente.id);
   const abonar = useRegistrarAbono(paciente.id);
   const [sel, setSel] = useState("");
+  const [abonando, setAbonando] = useState<PaquetePaciente | null>(null);
+  const [montoAbono, setMontoAbono] = useState("");
 
   async function onAsignar() {
     const paquete = catalogo.find((p) => p.id === sel);
@@ -50,24 +55,31 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
     }
   }
 
-  async function onAbonar(pp: PaquetePaciente) {
-    const txt = window.prompt(
-      `Monto del abono (saldo ${mx(pp.saldo)}):`,
-      pp.saldo.toFixed(2),
-    );
-    if (txt === null) return;
-    const monto = Number(txt);
+  function abrirAbono(pp: PaquetePaciente) {
+    setMontoAbono(pp.saldo.toFixed(2));
+    setAbonando(pp);
+  }
+
+  async function confirmarAbono(e: React.FormEvent) {
+    e.preventDefault();
+    if (!abonando) return;
+    const monto = Number(montoAbono);
     if (!Number.isFinite(monto) || monto <= 0) {
       toast.error("Monto inválido");
       return;
     }
+    if (monto > abonando.saldo) {
+      toast.error(`El abono no puede superar el saldo (${mx(abonando.saldo)})`);
+      return;
+    }
     try {
       await abonar.mutateAsync({
-        paquete_paciente_id: pp.id,
+        paquete_paciente_id: abonando.id,
         monto,
         metodo_pago: "efectivo",
       });
       toast.success("Abono registrado");
+      setAbonando(null);
     } catch {
       toast.error("No se pudo registrar el abono");
     }
@@ -138,7 +150,7 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onAbonar(pp)}
+                    onClick={() => abrirAbono(pp)}
                   >
                     Abono
                   </Button>
@@ -147,6 +159,45 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
             );
           })}
         </div>
+      )}
+
+      {abonando && (
+        <Modal
+          abierto
+          onCerrar={() => setAbonando(null)}
+          titulo="Registrar abono"
+          className="max-w-sm"
+        >
+          <form onSubmit={confirmarAbono} className="space-y-4">
+            <p className="text-sm text-luda-gris-light">
+              {abonando.nombre} · Saldo {mx(abonando.saldo)}
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="monto-abono">Monto del abono</Label>
+              <Input
+                id="monto-abono"
+                type="number"
+                min="0"
+                step="0.01"
+                autoFocus
+                value={montoAbono}
+                onChange={(e) => setMontoAbono(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setAbonando(null)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={abonar.isPending}>
+                {abonar.isPending ? "Guardando…" : "Registrar"}
+              </Button>
+            </div>
+          </form>
+        </Modal>
       )}
     </LudaCard>
   );

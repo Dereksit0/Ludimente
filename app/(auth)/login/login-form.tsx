@@ -82,11 +82,8 @@ export function LoginForm({ usuarios }: { usuarios: UsuarioLogin[] }) {
     <div className="w-full max-w-sm">
       {/* Logo (visible también en mobile, donde se oculta el panel derecho) */}
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-3 w-20 lg:hidden">
-          <LudiMascota />
-        </div>
         <h1 className="flex items-center justify-center gap-2 font-fredoka text-4xl text-luda-lila-dark">
-          <span aria-hidden>🐙</span> Ludimente
+          <LudiMascota className="h-12 w-12 shrink-0" /> Ludimente
         </h1>
         <p className="mt-1 flex items-center justify-center gap-1 text-sm font-semibold text-luda-gris-light">
           Donde aprender es jugar

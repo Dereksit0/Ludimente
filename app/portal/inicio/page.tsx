@@ -3,7 +3,14 @@ import { redirect } from "next/navigation";
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CreditCard, FileText, LogOut, Sparkles } from "lucide-react";
+import {
+  CreditCard,
+  FileSignature,
+  FileText,
+  LineChart,
+  LogOut,
+  Sparkles,
+} from "lucide-react";
 
 import {
   LudaCard,
@@ -14,9 +21,11 @@ import {
 import { Estrella } from "@/components/ui/ludi-mascota";
 import {
   obtenerAvances,
+  obtenerConsentimientos,
   obtenerDocumentos,
   obtenerPagos,
   obtenerProximasCitas,
+  obtenerReportesProgreso,
 } from "@/lib/portal/data";
 import { leerSesionPortal } from "@/lib/portal/session";
 import { PortalCitas } from "@/components/portal/portal-citas";
@@ -47,12 +56,15 @@ export default async function PortalInicioPage() {
   const sesion = leerSesionPortal();
   if (!sesion) redirect("/portal");
 
-  const [avances, citas, documentos, pagos] = await Promise.all([
-    obtenerAvances(sesion.pid),
-    obtenerProximasCitas(sesion.pid),
-    obtenerDocumentos(sesion.pid),
-    obtenerPagos(sesion.pid),
-  ]);
+  const [avances, citas, documentos, pagos, reportes, consentimientos] =
+    await Promise.all([
+      obtenerAvances(sesion.pid),
+      obtenerProximasCitas(sesion.pid),
+      obtenerDocumentos(sesion.pid),
+      obtenerPagos(sesion.pid),
+      obtenerReportesProgreso(sesion.pid),
+      obtenerConsentimientos(sesion.pid),
+    ]);
 
   return (
     <main className="min-h-screen bg-luda-fondo">
@@ -119,6 +131,110 @@ export default async function PortalInicioPage() {
                       {a.recomendaciones}
                     </p>
                   )}
+                </div>
+              ))
+            )}
+          </LudaCardContent>
+        </LudaCard>
+
+        {/* Reportes de progreso compartidos */}
+        <LudaCard>
+          <LudaCardHeader>
+            <LudaCardTitle className="flex items-center gap-2">
+              <LineChart className="h-5 w-5 text-luda-lila-dark" /> Reportes de
+              progreso
+            </LudaCardTitle>
+          </LudaCardHeader>
+          <LudaCardContent className="space-y-3">
+            {reportes.length === 0 ? (
+              <p className="text-sm text-luda-gris-light">
+                Aún no hay reportes compartidos contigo.
+              </p>
+            ) : (
+              reportes.map((r) => (
+                <div key={r.id} className="rounded-xl border border-luda-lila/15 p-4">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-sm font-bold text-luda-lila-dark">
+                      {r.titulo}
+                    </span>
+                    <span className="shrink-0 text-xs text-luda-gris-light">
+                      {fechaCorta(r.fecha)}
+                    </span>
+                  </div>
+                  {r.resumen && (
+                    <p className="text-sm text-luda-gris">{r.resumen}</p>
+                  )}
+                  {r.logros && (
+                    <p className="mt-1 text-sm text-luda-gris">
+                      <span className="font-semibold">Logros: </span>
+                      {r.logros}
+                    </p>
+                  )}
+                  {r.objetivos.length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {r.objetivos.map((o, i) => (
+                        <div key={i}>
+                          <div className="flex items-center justify-between text-xs text-luda-gris">
+                            <span className="min-w-0 truncate pr-2">
+                              {o.descripcion}
+                            </span>
+                            <span className="shrink-0 font-semibold">
+                              {o.progreso}%
+                            </span>
+                          </div>
+                          <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-luda-lila-light">
+                            <div
+                              className="h-full rounded-full bg-luda-lila"
+                              style={{ width: `${o.progreso}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {r.recomendaciones && (
+                    <p className="mt-2 text-sm text-luda-gris">
+                      <span className="font-semibold">Para casa: </span>
+                      {r.recomendaciones}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </LudaCardContent>
+        </LudaCard>
+
+        {/* Consentimientos */}
+        <LudaCard>
+          <LudaCardHeader>
+            <LudaCardTitle className="flex items-center gap-2">
+              <FileSignature className="h-5 w-5 text-luda-lila-dark" />{" "}
+              Consentimientos
+            </LudaCardTitle>
+          </LudaCardHeader>
+          <LudaCardContent className="space-y-2">
+            {consentimientos.length === 0 ? (
+              <p className="text-sm text-luda-gris-light">
+                No hay consentimientos registrados.
+              </p>
+            ) : (
+              consentimientos.map((c, i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-luda-fondo px-4 py-3"
+                >
+                  <p className="min-w-0 truncate text-sm font-semibold text-luda-gris">
+                    {c.titulo}
+                  </p>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                      c.firmado
+                        ? "bg-green-50 text-green-700"
+                        : "bg-yellow-50 text-yellow-700"
+                    }`}
+                  >
+                    {c.firmado ? "Firmado" : "Pendiente de firma"}
+                  </span>
                 </div>
               ))
             )}

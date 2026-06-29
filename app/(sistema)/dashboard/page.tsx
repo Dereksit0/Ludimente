@@ -61,6 +61,8 @@ export default async function DashboardPage() {
     { data: citasHoy },
     { data: pagosPendientes },
     { data: pagosMes },
+    { data: planesActivosData },
+    { data: gastosMesData },
   ] = await Promise.all([
     supabase
       .from("pacientes")
@@ -83,6 +85,16 @@ export default async function DashboardPage() {
       .select("monto_final, fecha_pago")
       .eq("estatus", "pagado")
       .gte("fecha_pago", inicioMes.toISOString()),
+    supabase
+      .from("planes_intervencion")
+      .select("id")
+      .eq("estatus", "activo"),
+    esAdmin
+      ? supabase
+          .from("gastos")
+          .select("monto, fecha")
+          .gte("fecha", inicioMes.toISOString().slice(0, 10))
+      : Promise.resolve({ data: [] as { monto: number; fecha: string }[] }),
   ]);
 
   const lista = pacientes ?? [];
@@ -133,6 +145,13 @@ export default async function DashboardPage() {
     (p) => differenceInCalendarDays(hoy, new Date(p.created_at)) >= 15,
   ).length;
 
+  const planesActivos = (planesActivosData ?? []).length;
+  const gastosMes = (gastosMesData ?? []).reduce(
+    (s, g) => s + Number(g.monto ?? 0),
+    0,
+  );
+  const utilidadMes = ingresosMes - gastosMes;
+
   // Nombres de paciente para citas de hoy y pagos pendientes.
   const refMap = new Map(
     lista.map((p) => [p.id, `${p.nombre} ${p.apellido_paterno}`]),
@@ -171,10 +190,16 @@ export default async function DashboardPage() {
 
       {/* Alertas rápidas para admin */}
       {esAdmin && (
-        <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           <MiniStat label="En lista de espera" valor={listaEspera} />
           <MiniStat label="En evaluación" valor={enEvaluacion} />
+          <MiniStat label="Planes activos" valor={planesActivos} />
           <MiniStat label="Pagos pendientes" valor={pendientes.length} />
+          <MiniStat
+            label="Utilidad del mes"
+            valor={mx(utilidadMes)}
+            alerta={utilidadMes < 0}
+          />
           <MiniStat
             label="Pagos vencidos"
             valor={vencidos}
@@ -302,7 +327,7 @@ export default async function DashboardPage() {
             </LudaCardHeader>
             <LudaCardContent className="grid grid-cols-2 gap-3">
               <MiniStat label="Activos" valor={activos} />
-              <MiniStat label="Lista de espera" valor={listaEspera} />
+              <MiniStat label="Planes activos" valor={planesActivos} />
               <MiniStat label="En evaluación" valor={enEvaluacion} />
               <MiniStat label="Total pacientes" valor={lista.length} />
             </LudaCardContent>
@@ -411,7 +436,7 @@ function MiniStat({
   alerta,
 }: {
   label: string;
-  valor: number;
+  valor: number | string;
   alerta?: boolean;
 }) {
   return (

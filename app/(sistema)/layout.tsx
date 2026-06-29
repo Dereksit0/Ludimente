@@ -29,7 +29,7 @@ export default async function SistemaLayout({
     <div className="flex h-screen overflow-hidden bg-luda-blanco">
       <Sidebar perfil={perfil} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
+        <Header rol={perfil.role} />
         <main className="flex-1 overflow-y-auto px-4 pb-24 pt-6 md:px-8 md:pb-8">
           {children}
         </main>

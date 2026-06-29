@@ -31,6 +31,25 @@ export interface PortalPago {
   fecha: string | null;
 }
 
+export interface PortalReporte {
+  id: string;
+  titulo: string;
+  periodo_inicio: string | null;
+  periodo_fin: string | null;
+  resumen: string | null;
+  logros: string | null;
+  recomendaciones: string | null;
+  objetivos: { descripcion: string; area: string; progreso: number }[];
+  fecha: string;
+}
+
+export interface PortalConsentimiento {
+  titulo: string;
+  tipo: string;
+  firmado: boolean;
+  fecha: string | null;
+}
+
 export async function obtenerAvances(pacienteId: string): Promise<PortalAvance[]> {
   const db = createAdminClient();
   const { data } = await db
@@ -93,6 +112,53 @@ export async function obtenerDocumentos(pacienteId: string): Promise<PortalDocum
     });
   }
   return resultados;
+}
+
+export async function obtenerReportesProgreso(
+  pacienteId: string,
+): Promise<PortalReporte[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("reportes_progreso")
+    .select(
+      "id, titulo, periodo_inicio, periodo_fin, resumen, logros, recomendaciones, objetivos_snapshot, created_at",
+    )
+    .eq("paciente_id", pacienteId)
+    .eq("compartido", true)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
+  return (data ?? []).map((r) => ({
+    id: r.id,
+    titulo: r.titulo,
+    periodo_inicio: r.periodo_inicio,
+    periodo_fin: r.periodo_fin,
+    resumen: r.resumen,
+    logros: r.logros,
+    recomendaciones: r.recomendaciones,
+    objetivos: Array.isArray(r.objetivos_snapshot)
+      ? (r.objetivos_snapshot as PortalReporte["objetivos"])
+      : [],
+    fecha: r.created_at,
+  }));
+}
+
+export async function obtenerConsentimientos(
+  pacienteId: string,
+): Promise<PortalConsentimiento[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("consentimientos")
+    .select("titulo, tipo, firmado, firmado_at")
+    .eq("paciente_id", pacienteId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((c) => ({
+    titulo: c.titulo,
+    tipo: c.tipo,
+    firmado: c.firmado,
+    fecha: c.firmado_at,
+  }));
 }
 
 export async function obtenerPagos(pacienteId: string): Promise<PortalPago[]> {

@@ -2,6 +2,13 @@ import { createClient } from "@/lib/supabase/client";
 
 export const BUCKET_FOTOS = "pacientes-fotos";
 export const BUCKET_DOCUMENTOS = "documentos";
+export const BUCKET_RECURSOS = "recursos";
+
+/** URL pública de un objeto en un bucket público (ej. biblioteca). */
+export function urlPublica(bucket: string, path: string): string {
+  const supabase = createClient();
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
 
 /** Sube un archivo y devuelve su ruta (storage path) dentro del bucket. */
 export async function subirArchivo(

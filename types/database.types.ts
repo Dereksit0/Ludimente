@@ -97,6 +97,37 @@ export type MetodoPago =
 
 export type EstatusPago = "pendiente" | "pagado" | "cancelado" | "reembolsado";
 
+export type EstatusPlan = "activo" | "pausado" | "completado" | "cancelado";
+
+export type AreaObjetivo =
+  | "lenguaje"
+  | "aprendizaje"
+  | "conducta"
+  | "motriz"
+  | "socioemocional"
+  | "atencion"
+  | "autonomia"
+  | "otro";
+
+export type PrioridadObjetivo = "alta" | "media" | "baja";
+
+export type EstatusObjetivo =
+  | "pendiente"
+  | "en_progreso"
+  | "logrado"
+  | "no_logrado";
+
+export type CategoriaGasto =
+  | "renta"
+  | "servicios"
+  | "nomina"
+  | "material"
+  | "equipo"
+  | "marketing"
+  | "impuestos"
+  | "mantenimiento"
+  | "otro";
+
 type Timestamps = {
   created_at: string;
   updated_at: string;
@@ -118,6 +149,7 @@ export interface Database {
           cedula_prof: string | null;
           color_agenda: string;
           activo: boolean;
+          cupo_maximo: number;
         } & Timestamps;
         Insert: {
           id: string;
@@ -131,6 +163,7 @@ export interface Database {
           cedula_prof?: string | null;
           color_agenda?: string;
           activo?: boolean;
+          cupo_maximo?: number;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
         Relationships: [];
@@ -651,6 +684,268 @@ export interface Database {
         };
         Update: Partial<
           Database["public"]["Tables"]["notificaciones"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      planes_intervencion: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          psicologo_id: string | null;
+          titulo: string;
+          diagnostico_base: string | null;
+          descripcion: string | null;
+          fecha_inicio: string;
+          fecha_fin_estimada: string | null;
+          estatus: string;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          psicologo_id?: string | null;
+          titulo: string;
+          diagnostico_base?: string | null;
+          descripcion?: string | null;
+          fecha_inicio?: string;
+          fecha_fin_estimada?: string | null;
+          estatus?: string;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["planes_intervencion"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      objetivos_intervencion: {
+        Row: {
+          id: string;
+          plan_id: string;
+          descripcion: string;
+          area: string;
+          prioridad: string;
+          estatus: string;
+          progreso: number;
+          fecha_meta: string | null;
+          orden: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          plan_id: string;
+          descripcion: string;
+          area?: string;
+          prioridad?: string;
+          estatus?: string;
+          progreso?: number;
+          fecha_meta?: string | null;
+          orden?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["objetivos_intervencion"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      recursos: {
+        Row: {
+          id: string;
+          titulo: string;
+          descripcion: string | null;
+          categoria: string;
+          url: string | null;
+          contenido: string | null;
+          etiquetas: string[];
+          edad_min: number | null;
+          edad_max: number | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          titulo: string;
+          descripcion?: string | null;
+          categoria?: string;
+          url?: string | null;
+          contenido?: string | null;
+          etiquetas?: string[];
+          edad_min?: number | null;
+          edad_max?: number | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["recursos"]["Insert"]>;
+        Relationships: [];
+      };
+      inventario_items: {
+        Row: {
+          id: string;
+          nombre: string;
+          categoria: string;
+          cantidad: number;
+          ubicacion: string | null;
+          estado: string;
+          prestado_a: string | null;
+          fecha_prestamo: string | null;
+          notas: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          categoria?: string;
+          cantidad?: number;
+          ubicacion?: string | null;
+          estado?: string;
+          prestado_a?: string | null;
+          fecha_prestamo?: string | null;
+          notas?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["inventario_items"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      consentimientos: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          tipo: string;
+          titulo: string;
+          contenido: string | null;
+          firmado: boolean;
+          firmante_nombre: string | null;
+          firmante_parentesco: string | null;
+          firma_data: string | null;
+          firmado_at: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          tipo?: string;
+          titulo: string;
+          contenido?: string | null;
+          firmado?: boolean;
+          firmante_nombre?: string | null;
+          firmante_parentesco?: string | null;
+          firma_data?: string | null;
+          firmado_at?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["consentimientos"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      reportes_progreso: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          plan_id: string | null;
+          psicologo_id: string | null;
+          titulo: string;
+          periodo_inicio: string | null;
+          periodo_fin: string | null;
+          resumen: string | null;
+          logros: string | null;
+          recomendaciones: string | null;
+          objetivos_snapshot: Json;
+          compartido: boolean;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          plan_id?: string | null;
+          psicologo_id?: string | null;
+          titulo: string;
+          periodo_inicio?: string | null;
+          periodo_fin?: string | null;
+          resumen?: string | null;
+          logros?: string | null;
+          recomendaciones?: string | null;
+          objetivos_snapshot?: Json;
+          compartido?: boolean;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["reportes_progreso"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      gastos: {
+        Row: {
+          id: string;
+          categoria: string;
+          concepto: string;
+          monto: number;
+          fecha: string;
+          metodo_pago: string;
+          proveedor: string | null;
+          notas: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          categoria?: string;
+          concepto: string;
+          monto: number;
+          fecha?: string;
+          metodo_pago?: string;
+          proveedor?: string | null;
+          notas?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["gastos"]["Insert"]>;
+        Relationships: [];
+      };
+      objetivo_seguimientos: {
+        Row: {
+          id: string;
+          objetivo_id: string;
+          fecha: string;
+          progreso: number;
+          nota: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          objetivo_id: string;
+          fecha?: string;
+          progreso: number;
+          nota?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["objetivo_seguimientos"]["Insert"]
         >;
         Relationships: [];
       };

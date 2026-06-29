@@ -7,7 +7,7 @@ import { LogOut } from "lucide-react";
 
 import { logoutAction } from "@/app/(auth)/login/actions";
 import { LudaAvatar } from "@/components/ui/luda-avatar";
-import { Estrella } from "@/components/ui/ludi-mascota";
+import { Estrella, LudiMascota } from "@/components/ui/ludi-mascota";
 import { cn } from "@/lib/utils";
 import { ROL_LABEL } from "@/types/app.types";
 import type { Perfil } from "@/types/app.types";
@@ -31,7 +31,7 @@ export function Sidebar({ perfil }: SidebarProps) {
           href="/dashboard"
           className="flex items-center gap-2 font-fredoka text-2xl text-luda-lila-dark"
         >
-          <span aria-hidden>🐙</span> Ludimente
+          <LudiMascota className="h-9 w-9 shrink-0" /> Ludimente
         </Link>
         <p className="mt-0.5 text-xs font-semibold text-luda-gris-light">
           Donde aprender es jugar

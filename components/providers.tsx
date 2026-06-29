@@ -10,6 +10,8 @@ import {
 import { toast } from "sonner";
 import { Toaster } from "sonner";
 
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
+
 /** Providers globales: React Query + Toaster con estilo Ludimente. */
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -33,7 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ConfirmProvider>{children}</ConfirmProvider>
       <Toaster
         position="top-right"
         toastOptions={{

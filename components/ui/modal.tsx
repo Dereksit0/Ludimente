@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { X } from "lucide-react";
 
@@ -17,6 +18,11 @@ interface ModalProps {
 /** Modal ligero con overlay, cierre por Escape y bloqueo de scroll. */
 export function Modal({ abierto, onCerrar, titulo, className, children }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  // El modal se monta vía portal en <body> para escapar de contenedores con
+  // backdrop-filter (header/bottom-nav), que rompen el position: fixed.
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => setMontado(true), []);
 
   useEffect(() => {
     if (!abierto) return;
@@ -62,9 +68,9 @@ export function Modal({ abierto, onCerrar, titulo, className, children }: ModalP
     };
   }, [abierto, onCerrar]);
 
-  if (!abierto) return null;
+  if (!abierto || !montado) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -97,6 +103,7 @@ export function Modal({ abierto, onCerrar, titulo, className, children }: ModalP
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

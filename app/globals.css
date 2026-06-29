@@ -74,11 +74,34 @@
 .dark .bg-luda-fondo\/80 {
   background-color: #1b1626 !important;
 }
+/* Barras translúcidas (header sticky y bottom-nav) sobre fondo oscuro. */
+.dark .bg-luda-blanco\/80,
+.dark .bg-luda-blanco\/95 {
+  background-color: rgba(21, 18, 29, 0.88) !important;
+}
+/* Variantes hover/focus de superficies claras: sin esto, al pasar el
+   cursor el fondo se vuelve claro y el texto oscuro "desaparece". */
+.dark .hover\:bg-white:hover,
+.dark .hover\:bg-luda-lila-light:hover,
+.dark .hover\:bg-luda-lila-light\/40:hover,
+.dark .hover\:bg-luda-lila-light\/30:hover {
+  background-color: #2c2440 !important;
+}
+.dark .hover\:bg-luda-fondo:hover {
+  background-color: #241d33 !important;
+}
 .dark .bg-luda-lila-light,
+.dark .bg-luda-lila-light\/30,
 .dark .bg-luda-lila-light\/40,
 .dark .bg-luda-lila-light\/50,
+.dark .bg-luda-lila-light\/60,
 .dark .bg-luda-lila-light\/70 {
   background-color: #2c2440 !important;
+}
+/* Texto lila-dark sobre superficies oscuras: súbele el tono para que
+   los chips (p. ej. diagnóstico del paciente) no pierdan contraste. */
+.dark .text-luda-lila-dark {
+  color: #cbb0e6 !important;
 }
 .dark .text-luda-gris {
   color: #e6e1ef !important;

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
@@ -189,6 +190,7 @@ export function SesionesTab({ paciente }: { paciente: PacienteDetalle }) {
   const crear = useCrearSesion(paciente.id);
   const actualizar = useActualizarSesion(paciente.id);
   const eliminar = useEliminarSesion(paciente.id);
+  const confirmar = useConfirm();
   const [abierto, setAbierto] = useState(false);
   const [editando, setEditando] = useState<Sesion | null>(null);
 
@@ -209,7 +211,13 @@ export function SesionesTab({ paciente }: { paciente: PacienteDetalle }) {
   }
 
   async function borrar(s: Sesion) {
-    if (!window.confirm("¿Eliminar esta nota de sesión?")) return;
+    const ok = await confirmar({
+      titulo: "Eliminar nota de sesión",
+      mensaje: "¿Eliminar esta nota de sesión?",
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     await eliminar.mutateAsync(s.id);
     toast.success("Nota eliminada");
   }

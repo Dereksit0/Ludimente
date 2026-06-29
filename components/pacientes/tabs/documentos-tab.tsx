@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
@@ -145,6 +146,7 @@ export function DocumentosTab({ paciente }: { paciente: PacienteDetalle }) {
   const { data: documentos = [], isLoading } = useDocumentosPaciente(paciente.id);
   const subir = useSubirDocumento(paciente.id);
   const eliminar = useEliminarDocumento(paciente.id);
+  const confirmar = useConfirm();
   const [abierto, setAbierto] = useState(false);
   const [abriendo, setAbriendo] = useState<string | null>(null);
 
@@ -172,7 +174,13 @@ export function DocumentosTab({ paciente }: { paciente: PacienteDetalle }) {
   }
 
   async function borrar(doc: Documento) {
-    if (!window.confirm(`¿Eliminar "${doc.nombre_display}"?`)) return;
+    const ok = await confirmar({
+      titulo: "Eliminar documento",
+      mensaje: `¿Eliminar "${doc.nombre_display}"? Esta acción no se puede deshacer.`,
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     try {
       await eliminar.mutateAsync(doc);
       toast.success("Documento eliminado");

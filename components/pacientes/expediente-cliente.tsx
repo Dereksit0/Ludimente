@@ -6,11 +6,14 @@ import { ArrowLeft } from "lucide-react";
 
 import { ExpedienteHeader } from "@/components/pacientes/expediente-header";
 import { CitasTab } from "@/components/pacientes/tabs/citas-tab";
+import { ConsentimientosTab } from "@/components/pacientes/tabs/consentimientos-tab";
 import { DocumentosTab } from "@/components/pacientes/tabs/documentos-tab";
 import { EvaluacionesTab } from "@/components/pacientes/tabs/evaluaciones-tab";
 import { InfoTab } from "@/components/pacientes/tabs/info-tab";
 import { PagosTab } from "@/components/pacientes/tabs/pagos-tab";
+import { PlanTab } from "@/components/pacientes/tabs/plan-tab";
 import { PortalTab } from "@/components/pacientes/tabs/portal-tab";
+import { ProgresoTab } from "@/components/pacientes/tabs/progreso-tab";
 import { SesionesTab } from "@/components/pacientes/tabs/sesiones-tab";
 import { TimelineTab } from "@/components/pacientes/tabs/timeline-tab";
 import { TutoresTab } from "@/components/pacientes/tabs/tutores-tab";
@@ -70,7 +73,10 @@ export function ExpedienteCliente({ id }: { id: string }) {
             <TabsTrigger value="citas">Citas</TabsTrigger>
             <TabsTrigger value="sesiones">Sesiones</TabsTrigger>
             <TabsTrigger value="evaluaciones">Evaluaciones</TabsTrigger>
+            <TabsTrigger value="plan">Plan</TabsTrigger>
+            <TabsTrigger value="progreso">Progreso</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
+            <TabsTrigger value="consentimientos">Consentimientos</TabsTrigger>
             {esAdmin && <TabsTrigger value="pagos">Pagos</TabsTrigger>}
             <TabsTrigger value="portal">Portal</TabsTrigger>
           </TabsList>
@@ -93,8 +99,17 @@ export function ExpedienteCliente({ id }: { id: string }) {
           <TabsContent value="evaluaciones">
             <EvaluacionesTab paciente={paciente} />
           </TabsContent>
+          <TabsContent value="plan">
+            <PlanTab paciente={paciente} />
+          </TabsContent>
+          <TabsContent value="progreso">
+            <ProgresoTab paciente={paciente} />
+          </TabsContent>
           <TabsContent value="documentos">
             <DocumentosTab paciente={paciente} />
+          </TabsContent>
+          <TabsContent value="consentimientos">
+            <ConsentimientosTab paciente={paciente} />
           </TabsContent>
           {esAdmin && (
             <TabsContent value="pagos">

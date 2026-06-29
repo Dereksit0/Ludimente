@@ -215,6 +215,124 @@ export const ESTATUS_EVALUACION_OPCIONES = [
 export const ESTATUS_EVALUACION_LABEL: Record<string, string> =
   Object.fromEntries(ESTATUS_EVALUACION_OPCIONES.map((e) => [e.value, e.label]));
 
+// ── Biblioteca de recursos ──
+export const CATEGORIA_RECURSO_OPCIONES = [
+  { value: "actividad", label: "Actividad" },
+  { value: "lectura", label: "Lectura" },
+  { value: "juego", label: "Juego" },
+  { value: "video", label: "Video" },
+  { value: "documento", label: "Documento" },
+  { value: "enlace", label: "Enlace" },
+  { value: "ejercicio", label: "Ejercicio" },
+] as const;
+
+export const CATEGORIA_RECURSO_LABEL: Record<string, string> =
+  Object.fromEntries(CATEGORIA_RECURSO_OPCIONES.map((c) => [c.value, c.label]));
+
+// ── Inventario ──
+export const CATEGORIA_INVENTARIO_OPCIONES = [
+  { value: "material", label: "Material didáctico" },
+  { value: "test", label: "Test / prueba" },
+  { value: "juego", label: "Juego" },
+  { value: "libro", label: "Libro" },
+  { value: "mobiliario", label: "Mobiliario" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const CATEGORIA_INVENTARIO_LABEL: Record<string, string> =
+  Object.fromEntries(CATEGORIA_INVENTARIO_OPCIONES.map((c) => [c.value, c.label]));
+
+export const ESTADO_INVENTARIO_OPCIONES = [
+  { value: "disponible", label: "Disponible" },
+  { value: "prestado", label: "Prestado" },
+  { value: "agotado", label: "Agotado" },
+  { value: "mantenimiento", label: "Mantenimiento" },
+] as const;
+
+export const ESTADO_INVENTARIO_CLASES: Record<string, string> = {
+  disponible: "bg-green-50 text-green-700",
+  prestado: "bg-yellow-50 text-yellow-700",
+  agotado: "bg-red-50 text-red-600",
+  mantenimiento: "bg-blue-50 text-blue-700",
+};
+
+export const ESTADO_INVENTARIO_LABEL: Record<string, string> =
+  Object.fromEntries(ESTADO_INVENTARIO_OPCIONES.map((e) => [e.value, e.label]));
+
+// ── Consentimientos ──
+export const TIPO_CONSENTIMIENTO_OPCIONES = [
+  { value: "consentimiento_informado", label: "Consentimiento informado" },
+  { value: "aviso_privacidad", label: "Aviso de privacidad" },
+  { value: "autorizacion_evaluacion", label: "Autorización de evaluación" },
+  { value: "autorizacion_imagenes", label: "Autorización de uso de imágenes" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const TIPO_CONSENTIMIENTO_LABEL: Record<string, string> =
+  Object.fromEntries(TIPO_CONSENTIMIENTO_OPCIONES.map((t) => [t.value, t.label]));
+
+/** Textos base editables por tipo de consentimiento. */
+export const PLANTILLA_CONSENTIMIENTO: Record<string, string> = {
+  consentimiento_informado:
+    "Autorizo que mi hijo(a) reciba los servicios de evaluación e intervención psicopedagógica ofrecidos por el consultorio. Se me ha explicado el propósito, los procedimientos y la confidencialidad del proceso, y he tenido oportunidad de resolver mis dudas.",
+  aviso_privacidad:
+    "Manifiesto que se me ha dado a conocer el aviso de privacidad y autorizo el tratamiento de los datos personales de mi hijo(a) para los fines clínicos y administrativos del consultorio, conforme a la ley aplicable.",
+  autorizacion_evaluacion:
+    "Autorizo la aplicación de las pruebas y evaluaciones psicopedagógicas que el equipo considere pertinentes para el diagnóstico y seguimiento de mi hijo(a).",
+  autorizacion_imagenes:
+    "Autorizo la toma de fotografías o videos de mi hijo(a) durante las sesiones, con fines exclusivamente clínicos y de seguimiento, comprometiéndose el consultorio a no difundirlos públicamente sin mi consentimiento.",
+  otro: "",
+};
+
+// ── Gastos ──
+export const CATEGORIA_GASTO_OPCIONES = [
+  { value: "renta", label: "Renta" },
+  { value: "servicios", label: "Servicios (luz, agua, internet)" },
+  { value: "nomina", label: "Nómina" },
+  { value: "material", label: "Material didáctico" },
+  { value: "equipo", label: "Equipo / mobiliario" },
+  { value: "marketing", label: "Marketing / publicidad" },
+  { value: "impuestos", label: "Impuestos" },
+  { value: "mantenimiento", label: "Mantenimiento" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const CATEGORIA_GASTO_LABEL: Record<string, string> = Object.fromEntries(
+  CATEGORIA_GASTO_OPCIONES.map((c) => [c.value, c.label]),
+);
+
+// ── Plan de intervención ──
+export const ESTATUS_PLAN_OPCIONES = [
+  { value: "activo", label: "Activo" },
+  { value: "pausado", label: "Pausado" },
+  { value: "completado", label: "Completado" },
+  { value: "cancelado", label: "Cancelado" },
+] as const;
+
+export const AREA_OBJETIVO_OPCIONES = [
+  { value: "lenguaje", label: "Lenguaje" },
+  { value: "aprendizaje", label: "Aprendizaje" },
+  { value: "conducta", label: "Conducta" },
+  { value: "motriz", label: "Motriz" },
+  { value: "socioemocional", label: "Socioemocional" },
+  { value: "atencion", label: "Atención" },
+  { value: "autonomia", label: "Autonomía" },
+  { value: "otro", label: "Otro" },
+] as const;
+
+export const PRIORIDAD_OBJETIVO_OPCIONES = [
+  { value: "alta", label: "Alta" },
+  { value: "media", label: "Media" },
+  { value: "baja", label: "Baja" },
+] as const;
+
+export const ESTATUS_OBJETIVO_OPCIONES = [
+  { value: "pendiente", label: "Pendiente" },
+  { value: "en_progreso", label: "En progreso" },
+  { value: "logrado", label: "Logrado" },
+  { value: "no_logrado", label: "No logrado" },
+] as const;
+
 /** Fortalezas y áreas de oportunidad sugeridas. */
 export const FORTALEZAS_SUGERIDAS = [
   "Vocabulario",
