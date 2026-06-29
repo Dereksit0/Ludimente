@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
@@ -48,7 +50,7 @@ export function PortalLoginForm() {
         </p>
       </div>
 
-      <form action={formAction} className="space-y-5">
+      <form action={formAction} method="post" className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="codigo">Código de acceso</Label>
           <div className="relative">
