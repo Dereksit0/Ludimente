@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { CalendarPlus, FilePlus2, NotebookPen } from "lucide-react";
 import { toast } from "sonner";
@@ -13,12 +13,12 @@ import { Button } from "@/components/ui/button";
 import { LudaAvatar } from "@/components/ui/luda-avatar";
 import { LudaBadge } from "@/components/ui/luda-badge";
 import { Modal } from "@/components/ui/modal";
+import { PulpitoPaciente } from "@/components/ui/pulpito-paciente";
 import { useCrearCita } from "@/hooks/use-citas";
 import { useSubirDocumento, type NuevoDocumento } from "@/hooks/use-documentos";
 import type { PacienteDetalle } from "@/hooks/use-pacientes";
 import { useCrearSesion } from "@/hooks/use-sesiones";
 import { edadLegible } from "@/lib/fechas";
-import { BUCKET_FOTOS, urlFirmada } from "@/lib/storage";
 import type { CitaInput } from "@/lib/validations/cita.schema";
 import type { SesionInput } from "@/lib/validations/sesion.schema";
 
@@ -28,20 +28,6 @@ export function ExpedienteHeader({ paciente }: { paciente: PacienteDetalle }) {
   const nombreCompleto = `${paciente.nombre} ${paciente.apellido_paterno} ${
     paciente.apellido_materno ?? ""
   }`.trim();
-
-  // Foto en bucket privado → resolver URL firmada para mostrarla.
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let activo = true;
-    if (paciente.foto_url) {
-      urlFirmada(BUCKET_FOTOS, paciente.foto_url).then((u) => {
-        if (activo) setFotoUrl(u);
-      });
-    }
-    return () => {
-      activo = false;
-    };
-  }, [paciente.foto_url]);
 
   const [modal, setModal] = useState<ModalActivo>(null);
   const crearCita = useCrearCita();
@@ -81,7 +67,7 @@ export function ExpedienteHeader({ paciente }: { paciente: PacienteDetalle }) {
   return (
     <div className="mx-auto max-w-5xl rounded-2xl border border-luda-lila/15 bg-white p-4 shadow-luda md:p-5">
       <div className="flex flex-wrap items-center gap-4">
-        <LudaAvatar nombre={nombreCompleto} foto={fotoUrl} size={64} />
+        <PulpitoPaciente sexo={paciente.sexo} size={64} />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

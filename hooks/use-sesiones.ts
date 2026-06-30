@@ -26,6 +26,8 @@ function aFila(input: SesionInput) {
     logros_sesion: limpio(input.logros_sesion),
     dificultades_encontradas: limpio(input.dificultades_encontradas),
     humor_paciente: input.humor_paciente ?? null,
+    tuvo_desborde: input.tuvo_desborde ?? false,
+    desborde_notas: input.tuvo_desborde ? limpio(input.desborde_notas) : null,
     nivel_participacion: input.nivel_participacion ?? null,
     plan_siguiente_sesion: limpio(input.plan_siguiente_sesion),
     recomendaciones_casa: limpio(input.recomendaciones_casa),

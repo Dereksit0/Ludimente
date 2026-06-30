@@ -28,6 +28,7 @@ import {
   obtenerReportesProgreso,
 } from "@/lib/portal/data";
 import { leerSesionPortal } from "@/lib/portal/session";
+import { infoLimitePago, mensajeRecordatorioPago } from "@/lib/pagos-limite";
 import { PortalCitas } from "@/components/portal/portal-citas";
 import { ESTATUS_PAGO_CLASES, ESTATUS_PAGO_LABEL } from "@/types/app.types";
 import type { EstatusPago } from "@/types/database.types";
@@ -284,37 +285,63 @@ export default async function PortalInicioPage() {
                 No hay pagos registrados.
               </p>
             ) : (
-              pagos.map((p, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between rounded-xl bg-luda-fondo px-4 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-bold text-luda-gris">
-                      {p.concepto}
-                    </p>
-                    {p.fecha && (
-                      <p className="text-xs text-luda-gris-light">
-                        {fechaCorta(p.fecha)}
+              pagos.map((p, i) => {
+                const info =
+                  p.estatus === "pendiente" ? infoLimitePago(p.creado) : null;
+                return (
+                  <div
+                    key={i}
+                    className={`rounded-xl bg-luda-fondo px-4 py-3 ${
+                      info?.vencido
+                        ? "border-l-4 border-l-red-400"
+                        : info?.porVencer
+                          ? "border-l-4 border-l-yellow-400"
+                          : ""
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-luda-gris">
+                          {p.concepto}
+                        </p>
+                        {p.fecha && (
+                          <p className="text-xs text-luda-gris-light">
+                            {fechaCorta(p.fecha)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-luda-gris">
+                          ${p.monto.toLocaleString("es-MX", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </p>
+                        <span
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            ESTATUS_PAGO_CLASES[p.estatus as EstatusPago] ?? ""
+                          }`}
+                        >
+                          {ESTATUS_PAGO_LABEL[p.estatus as EstatusPago] ??
+                            p.estatus}
+                        </span>
+                      </div>
+                    </div>
+                    {info && (
+                      <p
+                        className={`mt-2 text-xs font-semibold ${
+                          info.vencido
+                            ? "text-red-600"
+                            : info.porVencer
+                              ? "text-yellow-700"
+                              : "text-luda-gris-light"
+                        }`}
+                      >
+                        ⏰ {mensajeRecordatorioPago(info)}
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-luda-gris">
-                      ${p.monto.toLocaleString("es-MX", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </p>
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        ESTATUS_PAGO_CLASES[p.estatus as EstatusPago] ?? ""
-                      }`}
-                    >
-                      {ESTATUS_PAGO_LABEL[p.estatus as EstatusPago] ?? p.estatus}
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </LudaCardContent>
         </LudaCard>

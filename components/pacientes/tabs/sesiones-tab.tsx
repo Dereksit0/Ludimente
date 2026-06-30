@@ -29,6 +29,7 @@ import {
 import {
   AREA_TRABAJO_LABEL,
   AREA_TRABAJO_OPCIONES,
+  HUMOR_LABEL,
   HUMOR_OPCIONES,
 } from "@/lib/catalogos";
 import { sesionSchema, type SesionInput } from "@/lib/validations/sesion.schema";
@@ -45,6 +46,8 @@ function sesionAInput(s: Sesion): Partial<SesionInput> {
     logros_sesion: s.logros_sesion ?? "",
     dificultades_encontradas: s.dificultades_encontradas ?? "",
     humor_paciente: s.humor_paciente ?? undefined,
+    tuvo_desborde: s.tuvo_desborde ?? false,
+    desborde_notas: s.desborde_notas ?? "",
     nivel_participacion: s.nivel_participacion ?? undefined,
     plan_siguiente_sesion: s.plan_siguiente_sesion ?? "",
     recomendaciones_casa: s.recomendaciones_casa ?? "",
@@ -69,6 +72,7 @@ export function SesionForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<SesionInput>({
     resolver: zodResolver(sesionSchema),
@@ -84,12 +88,16 @@ export function SesionForm({
       logros_sesion: inicial?.logros_sesion ?? "",
       dificultades_encontradas: inicial?.dificultades_encontradas ?? "",
       humor_paciente: inicial?.humor_paciente,
+      tuvo_desborde: inicial?.tuvo_desborde ?? false,
+      desborde_notas: inicial?.desborde_notas ?? "",
       nivel_participacion: inicial?.nivel_participacion,
       plan_siguiente_sesion: inicial?.plan_siguiente_sesion ?? "",
       recomendaciones_casa: inicial?.recomendaciones_casa ?? "",
       borrador: inicial?.borrador ?? false,
     },
   });
+
+  const tuvoDesborde = watch("tuvo_desborde");
 
   return (
     <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
@@ -139,6 +147,25 @@ export function SesionForm({
             {...register("nivel_participacion")}
           />
         </Campo>
+      </div>
+
+      <div className="rounded-xl border border-luda-lila/20 bg-luda-lila-light/30 p-3">
+        <label className="flex items-center gap-2 text-sm font-semibold text-luda-gris">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-luda-lila"
+            {...register("tuvo_desborde")}
+          />
+          ⚡ ¿El paciente tuvo un desborde emocional?
+        </label>
+        {tuvoDesborde && (
+          <div className="mt-2">
+            <Textarea
+              placeholder="¿Qué lo desencadenó, cómo se manifestó y cómo se regresó a la calma?"
+              {...register("desborde_notas")}
+            />
+          </div>
+        )}
       </div>
 
       <Campo label="Objetivos de la sesión" requerido error={errors.objetivos_sesion?.message}>
@@ -261,8 +288,20 @@ export function SesionesTab({ paciente }: { paciente: PacienteDetalle }) {
                   </span>
                 )}
               </p>
-              <p className="text-xs text-luda-gris-light">
-                {s.area_trabajo ? AREA_TRABAJO_LABEL[s.area_trabajo] : "Sin área"}
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-luda-gris-light">
+                <span>
+                  {s.area_trabajo ? AREA_TRABAJO_LABEL[s.area_trabajo] : "Sin área"}
+                </span>
+                {s.humor_paciente && (
+                  <span className="rounded-full bg-luda-lila-light px-2 py-0.5 font-semibold text-luda-lila-dark">
+                    {HUMOR_LABEL[s.humor_paciente] ?? s.humor_paciente}
+                  </span>
+                )}
+                {s.tuvo_desborde && (
+                  <span className="rounded-full bg-red-50 px-2 py-0.5 font-semibold text-red-600">
+                    ⚡ Desborde
+                  </span>
+                )}
               </p>
               {s.logros_sesion && (
                 <p className="mt-1 line-clamp-2 text-sm text-luda-gris">

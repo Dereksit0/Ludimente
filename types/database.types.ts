@@ -53,7 +53,25 @@ export type AreaTrabajo =
   | "motor"
   | "otro";
 
-export type HumorPaciente = "muy_bien" | "bien" | "regular" | "mal" | "muy_mal";
+export type HumorPaciente =
+  | "muy_bien"
+  | "bien"
+  | "regular"
+  | "mal"
+  | "muy_mal"
+  | "feliz"
+  | "contento"
+  | "tranquilo"
+  | "neutral"
+  | "ansioso"
+  | "nervioso"
+  | "irritable"
+  | "enojado"
+  | "triste"
+  | "frustrado"
+  | "cansado"
+  | "desregulado"
+  | "euforico";
 
 export type TipoPrueba =
   | "WISC-V"
@@ -192,6 +210,7 @@ export interface Database {
           alergias: string | null;
           medicamentos: string | null;
           informacion_medica: string | null;
+          antecedentes: string | null;
           created_by: string | null;
         } & Timestamps;
         Insert: {
@@ -217,9 +236,86 @@ export interface Database {
           alergias?: string | null;
           medicamentos?: string | null;
           informacion_medica?: string | null;
+          antecedentes?: string | null;
           created_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["pacientes"]["Insert"]>;
+        Relationships: [];
+      };
+      planeaciones: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          terapeuta_id: string | null;
+          dia_semana: number;
+          horario: string | null;
+          objetivos: string | null;
+          inicio: string | null;
+          desarrollo: string | null;
+          cierre: string | null;
+          materiales: string | null;
+          notas: string | null;
+          activo: boolean;
+          created_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          terapeuta_id?: string | null;
+          dia_semana?: number;
+          horario?: string | null;
+          objetivos?: string | null;
+          inicio?: string | null;
+          desarrollo?: string | null;
+          cierre?: string | null;
+          materiales?: string | null;
+          notas?: string | null;
+          activo?: boolean;
+          created_by?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["planeaciones"]["Insert"]>;
+        Relationships: [];
+      };
+      tamizajes: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          evaluador_id: string | null;
+          fecha: string;
+          areas: Json;
+          observaciones: string | null;
+          created_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          evaluador_id?: string | null;
+          fecha?: string;
+          areas?: Json;
+          observaciones?: string | null;
+          created_by?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["tamizajes"]["Insert"]>;
+        Relationships: [];
+      };
+      formatos_llenados: {
+        Row: {
+          id: string;
+          paciente_id: string;
+          formato_id: string;
+          titulo: string;
+          respuestas: Json;
+          created_by: string | null;
+        } & Timestamps;
+        Insert: {
+          id?: string;
+          paciente_id: string;
+          formato_id: string;
+          titulo: string;
+          respuestas?: Json;
+          created_by?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["formatos_llenados"]["Insert"]>;
         Relationships: [];
       };
       tutores: {
@@ -312,6 +408,8 @@ export interface Database {
           logros_sesion: string | null;
           dificultades_encontradas: string | null;
           humor_paciente: HumorPaciente | null;
+          tuvo_desborde: boolean;
+          desborde_notas: string | null;
           nivel_participacion: number | null;
           plan_siguiente_sesion: string | null;
           recomendaciones_casa: string | null;
@@ -336,6 +434,8 @@ export interface Database {
           logros_sesion?: string | null;
           dificultades_encontradas?: string | null;
           humor_paciente?: HumorPaciente | null;
+          tuvo_desborde?: boolean;
+          desborde_notas?: string | null;
           nivel_participacion?: number | null;
           plan_siguiente_sesion?: string | null;
           recomendaciones_casa?: string | null;

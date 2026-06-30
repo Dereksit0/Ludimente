@@ -20,7 +20,7 @@ export function PasoAsignacion() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <Campo label="Psicólogo asignado" htmlFor="psicologo_asignado_id">
+        <Campo label="Terapeuta asignado" htmlFor="psicologo_asignado_id">
           <Select
             id="psicologo_asignado_id"
             {...register("psicologo_asignado_id")}

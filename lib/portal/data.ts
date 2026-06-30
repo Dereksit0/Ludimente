@@ -29,6 +29,7 @@ export interface PortalPago {
   monto: number;
   estatus: string;
   fecha: string | null;
+  creado: string;
 }
 
 export interface PortalReporte {
@@ -175,5 +176,6 @@ export async function obtenerPagos(pacienteId: string): Promise<PortalPago[]> {
     monto: Number(p.monto_final ?? 0),
     estatus: p.estatus ?? "pendiente",
     fecha: p.fecha_pago,
+    creado: p.created_at,
   }));
 }

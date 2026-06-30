@@ -161,16 +161,30 @@ export function AgendaCliente() {
   const reagendar = useReagendarCita();
   const crearSesion = useCrearSesion(notaPara?.paciente_id ?? "");
 
-  // Resumen del día actual.
-  const resumenHoy = useMemo(() => {
-    const hoy = visibles.filter((c) => isSameDay(new Date(c.fecha_inicio), new Date()));
-    return {
-      total: hoy.length,
-      confirmadas: hoy.filter((c) => c.estatus === "confirmada").length,
-      completadas: hoy.filter((c) => c.estatus === "completada").length,
-      pendientes: hoy.filter((c) => c.estatus === "programada").length,
-    };
-  }, [visibles]);
+  // Resumen del periodo que se está viendo (día o semana), no del "hoy" fijo.
+  const resumen = useMemo(
+    () => ({
+      total: visibles.length,
+      confirmadas: visibles.filter((c) => c.estatus === "confirmada").length,
+      completadas: visibles.filter((c) => c.estatus === "completada").length,
+      pendientes: visibles.filter((c) => c.estatus === "programada").length,
+    }),
+    [visibles],
+  );
+
+  // ¿El periodo mostrado incluye el día de hoy? Define la etiqueta del resumen.
+  const hoyVisible = useMemo(
+    () => dias.some((d) => isSameDay(d, new Date())),
+    [dias],
+  );
+  const periodoLabel =
+    vista === "dia"
+      ? hoyVisible
+        ? "hoy"
+        : "ese día"
+      : hoyVisible
+        ? "esta semana"
+        : "esa semana";
 
   async function guardar(valores: CitaInput) {
     try {
@@ -386,10 +400,10 @@ export function AgendaCliente() {
             : `${format(inicioSemana, "d 'de' MMM", { locale: es })} — ${format(finSemana, "d 'de' MMM yyyy", { locale: es })}`}
         </p>
         <div className="flex flex-wrap items-center gap-3 text-xs text-luda-gris-light">
-          <span><b className="text-luda-gris">{resumenHoy.total}</b> hoy</span>
-          <span><b className="text-luda-gris">{resumenHoy.pendientes}</b> por confirmar</span>
-          <span><b className="text-luda-gris">{resumenHoy.confirmadas}</b> confirmadas</span>
-          <span><b className="text-luda-gris">{resumenHoy.completadas}</b> completadas</span>
+          <span><b className="text-luda-gris">{resumen.total}</b> {periodoLabel}</span>
+          <span><b className="text-luda-gris">{resumen.pendientes}</b> por confirmar</span>
+          <span><b className="text-luda-gris">{resumen.confirmadas}</b> confirmadas</span>
+          <span><b className="text-luda-gris">{resumen.completadas}</b> completadas</span>
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
+import { useConfiguracion } from "@/hooks/use-configuracion";
 import { createClient } from "@/lib/supabase/client";
 import {
   useCrearEvaluacion,
@@ -77,6 +78,7 @@ export function EvaluacionesCliente() {
   const crear = useCrearEvaluacion();
   const actualizar = useActualizarEvaluacion();
   const eliminar = useEliminarEvaluacion();
+  const { data: config } = useConfiguracion();
   const confirmar = useConfirm();
 
   const [filtro, setFiltro] = useState("");
@@ -116,7 +118,7 @@ export function EvaluacionesCliente() {
 
   async function imprimir(id: string, nombre: string) {
     const d = await cargarDetalle(id);
-    imprimirEvaluacion(d, nombre);
+    imprimirEvaluacion(d, nombre, config);
   }
 
   async function borrar(id: string) {

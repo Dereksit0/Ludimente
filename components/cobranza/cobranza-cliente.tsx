@@ -24,6 +24,11 @@ import { useConfiguracion } from "@/hooks/use-configuracion";
 import { useCobranza, useMarcarPago, type PagoCobranza } from "@/hooks/use-cobranza";
 import { ESTATUS_PAGO_OPCIONES } from "@/lib/catalogos";
 import { descargarCSV } from "@/lib/csv";
+import {
+  DIAS_LIMITE_PAGO,
+  INTERES_MORATORIO_PCT,
+  infoLimitePago,
+} from "@/lib/pagos-limite";
 import { imprimirRecibo } from "@/lib/print-recibo";
 import { ESTATUS_PAGO_CLASES, ESTATUS_PAGO_LABEL } from "@/types/app.types";
 import type { EstatusPago } from "@/types/database.types";
@@ -32,7 +37,6 @@ const mx = (n: number) =>
   `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
 
 /** Días que lleva pendiente un pago desde su creación. */
-const DIAS_VENCIDO = 15;
 function diasPendiente(p: PagoCobranza): number {
   return differenceInCalendarDays(new Date(), new Date(p.created_at));
 }
@@ -80,7 +84,7 @@ export function CobranzaCliente() {
       }
       if (p.estatus === "pendiente") {
         pendiente += monto;
-        if (diasPendiente(p) >= DIAS_VENCIDO) vencido += monto;
+        if (infoLimitePago(p.created_at).vencido) vencido += monto;
       }
     }
     return { ingresosMes, pendiente, totalPagado, vencido };
@@ -113,7 +117,7 @@ export function CobranzaCliente() {
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <LudaStat label="Ingresos del mes" value={mx(totales.ingresosMes)} icon={Wallet} acento="lila" />
         <LudaStat label="Por cobrar" value={mx(totales.pendiente)} icon={Clock} acento="rosa" />
-        <LudaStat label="Vencido (+15 días)" value={mx(totales.vencido)} icon={AlertTriangle} acento="amarillo" />
+        <LudaStat label={`Vencido (límite ${DIAS_LIMITE_PAGO} días)`} value={mx(totales.vencido)} icon={AlertTriangle} acento="amarillo" />
         <LudaStat label="Total cobrado" value={mx(totales.totalPagado)} icon={CheckCircle2} acento="azul" />
       </section>
 
@@ -157,13 +161,18 @@ export function CobranzaCliente() {
 
       <div className="space-y-2">
         {visibles.map((p) => {
-          const dias = p.estatus === "pendiente" ? diasPendiente(p) : 0;
-          const vencido = dias >= DIAS_VENCIDO;
+          const info =
+            p.estatus === "pendiente" ? infoLimitePago(p.created_at) : null;
+          const vencido = info?.vencido ?? false;
           return (
             <LudaCard
               key={p.id}
               className={`flex flex-wrap items-center gap-3 p-4 ${
-                vencido ? "border-l-4 border-l-yellow-400" : ""
+                vencido
+                  ? "border-l-4 border-l-red-400"
+                  : info?.porVencer
+                    ? "border-l-4 border-l-yellow-400"
+                    : ""
               }`}
             >
               <div className="min-w-0 flex-1">
@@ -178,9 +187,22 @@ export function CobranzaCliente() {
                   {p.fecha_pago
                     ? format(new Date(p.fecha_pago), "d 'de' MMM yyyy", { locale: es })
                     : format(new Date(p.created_at), "d 'de' MMM yyyy", { locale: es })}
-                  {p.estatus === "pendiente" && dias > 0 && (
-                    <span className={vencido ? "font-semibold text-yellow-600" : ""}>
-                      {" "}· {dias} día(s) pendiente
+                  {info && (
+                    <span
+                      className={
+                        vencido
+                          ? "font-semibold text-red-600"
+                          : info.porVencer
+                            ? "font-semibold text-yellow-600"
+                            : ""
+                      }
+                    >
+                      {" "}· Límite {format(info.limite, "d MMM", { locale: es })} ·{" "}
+                      {vencido
+                        ? `vencido hace ${Math.abs(info.diasRestantes)} día(s) · +${INTERES_MORATORIO_PCT}% interés`
+                        : info.diasRestantes === 0
+                          ? "vence hoy"
+                          : `quedan ${info.diasRestantes} día(s)`}
                     </span>
                   )}
                 </p>

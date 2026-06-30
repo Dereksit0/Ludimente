@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { LudaAvatar } from "@/components/ui/luda-avatar";
 import { LudaBadge } from "@/components/ui/luda-badge";
 import { LudaCard } from "@/components/ui/luda-card";
+import { PulpitoPaciente } from "@/components/ui/pulpito-paciente";
 import { edadLegible } from "@/lib/fechas";
 import type { PacienteListItem } from "@/hooks/use-pacientes";
 
@@ -15,7 +15,7 @@ export function PacienteCard({ paciente }: { paciente: PacienteListItem }) {
     <Link href={`/pacientes/${paciente.id}`} className="group block">
       <LudaCard className="h-full p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-luda-md">
         <div className="flex items-start gap-3">
-          <LudaAvatar nombre={nombreCompleto} foto={null} size={48} />
+          <PulpitoPaciente sexo={paciente.sexo} size={48} />
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-bold text-luda-gris group-hover:text-luda-lila-dark">
               {nombreCompleto}

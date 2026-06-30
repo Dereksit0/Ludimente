@@ -1,46 +1,20 @@
 "use client";
 
-import { useState } from "react";
-
 import { Controller, useFormContext } from "react-hook-form";
-import { ImagePlus, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Input } from "@/components/ui/input";
-import { LudaAvatar } from "@/components/ui/luda-avatar";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { GRADOS_ESCOLARES, SEXO_OPCIONES, TURNO_OPCIONES } from "@/lib/catalogos";
-import { BUCKET_FOTOS, subirArchivo } from "@/lib/storage";
 import type { NuevoPacienteInput } from "@/lib/validations/paciente.schema";
 
 export function PasoDatos() {
   const {
     register,
     control,
-    setValue,
     formState: { errors },
   } = useFormContext<NuevoPacienteInput>();
-  const [subiendo, setSubiendo] = useState(false);
-  const [previewNombre, setPreviewNombre] = useState("");
-
-  async function onFoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSubiendo(true);
-    try {
-      const path = `tmp/${crypto.randomUUID()}-${file.name}`;
-      await subirArchivo(BUCKET_FOTOS, path, file);
-      setValue("foto_url", path, { shouldDirty: true });
-      setPreviewNombre(file.name);
-      toast.success("Foto cargada ⭐");
-    } catch {
-      toast.error("No se pudo subir la foto. Puedes continuar sin ella.");
-    } finally {
-      setSubiendo(false);
-    }
-  }
 
   return (
     <div className="space-y-5">
@@ -80,28 +54,6 @@ export function PasoDatos() {
               </option>
             ))}
           </Select>
-        </Campo>
-
-        {/* Foto */}
-        <Campo label="Foto (opcional)">
-          <div className="flex items-center gap-3">
-            <LudaAvatar nombre={previewNombre || "Foto"} foto={null} size={48} />
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-luda-lila/40 bg-white px-3 py-2 text-sm font-semibold text-luda-gris hover:bg-luda-lila-light">
-              {subiendo ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ImagePlus className="h-4 w-4" />
-              )}
-              {subiendo ? "Subiendo…" : "Subir foto"}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onFoto}
-                disabled={subiendo}
-              />
-            </label>
-          </div>
         </Campo>
       </div>
 

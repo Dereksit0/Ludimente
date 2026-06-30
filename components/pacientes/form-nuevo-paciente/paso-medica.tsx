@@ -9,8 +9,33 @@ import { Textarea } from "@/components/ui/textarea";
 import { DIAGNOSTICOS_COMUNES } from "@/lib/catalogos";
 import type { NuevoPacienteInput } from "@/lib/validations/paciente.schema";
 
+const NO_APLICA = "No aplica";
+
+/** Botón rápido para marcar un campo como "No aplica" / "No tiene". */
+function BotonNoAplica({
+  activo,
+  onClick,
+}: {
+  activo: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`mb-1.5 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors ${
+        activo
+          ? "bg-luda-lila text-white"
+          : "bg-luda-lila-light text-luda-lila-dark hover:bg-luda-lila/30"
+      }`}
+    >
+      {activo ? "✓ No aplica / no tiene" : "No aplica / no tiene"}
+    </button>
+  );
+}
+
 export function PasoMedica() {
-  const { register, control } = useFormContext<NuevoPacienteInput>();
+  const { register, control, setValue, watch } = useFormContext<NuevoPacienteInput>();
 
   return (
     <div className="space-y-5">
@@ -45,9 +70,29 @@ export function PasoMedica() {
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Campo label="Alergias" htmlFor="alergias">
+          <BotonNoAplica
+            activo={watch("alergias") === NO_APLICA}
+            onClick={() =>
+              setValue(
+                "alergias",
+                watch("alergias") === NO_APLICA ? "" : NO_APLICA,
+                { shouldDirty: true },
+              )
+            }
+          />
           <Textarea id="alergias" {...register("alergias")} />
         </Campo>
         <Campo label="Medicamentos actuales" htmlFor="medicamentos">
+          <BotonNoAplica
+            activo={watch("medicamentos") === NO_APLICA}
+            onClick={() =>
+              setValue(
+                "medicamentos",
+                watch("medicamentos") === NO_APLICA ? "" : NO_APLICA,
+                { shouldDirty: true },
+              )
+            }
+          />
           <Textarea id="medicamentos" {...register("medicamentos")} />
         </Campo>
       </div>

@@ -51,7 +51,7 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
           </div>
           <div className="space-y-1.5">
             <p className="text-xs font-semibold uppercase tracking-wide text-luda-gris-light">
-              Psicólogo asignado
+              Terapeuta asignado
             </p>
             <Select
               value={paciente.psicologo_asignado_id ?? ""}
@@ -76,6 +76,17 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
           <LudaCardTitle>Datos personales</LudaCardTitle>
         </LudaCardHeader>
         <LudaCardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div className="space-y-1">
+            <CampoEditable
+              label="Cumpleaños"
+              valor={paciente.fecha_nacimiento}
+              tipo="date"
+              onGuardar={(v) => guardar({ fecha_nacimiento: v })}
+            />
+            <p className="text-xs text-luda-gris-light">
+              {fechaLarga(paciente.fecha_nacimiento)}
+            </p>
+          </div>
           <CampoEditable
             label="Escuela"
             valor={paciente.escuela}
@@ -116,6 +127,14 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
             label="Medicamentos"
             valor={paciente.medicamentos}
             onGuardar={(v) => guardar({ medicamentos: v || null })}
+          />
+          <CampoEditable
+            label="Antecedentes terapéuticos o clínicos"
+            valor={paciente.antecedentes}
+            tipo="textarea"
+            placeholder="Terapias previas, diagnósticos anteriores, hospitalizaciones, tratamientos…"
+            onGuardar={(v) => guardar({ antecedentes: v || null })}
+            className="sm:col-span-2"
           />
           <CampoEditable
             label="Información médica relevante"

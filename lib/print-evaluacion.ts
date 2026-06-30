@@ -1,18 +1,19 @@
 import type { EvaluacionDetalle } from "@/hooks/use-evaluaciones";
 import { ESTATUS_EVALUACION_LABEL, TIPO_PRUEBA_OPCIONES } from "@/lib/catalogos";
-
-const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>]/g, (c) =>
-    c === "&" ? "&amp;" : c === "<" ? "&lt;" : "&gt;",
-  );
+import {
+  abrirDocumentoMembretado,
+  escMembrete as esc,
+  type ConfigMembrete,
+} from "@/lib/print-membrete";
 
 const tipoLabel = (v: string) =>
   TIPO_PRUEBA_OPCIONES.find((t) => t.value === v)?.label ?? v;
 
-/** Abre una ventana imprimible (Guardar como PDF) con el reporte. */
+/** Abre una ventana imprimible (Guardar como PDF) con el reporte membretado. */
 export function imprimirEvaluacion(
   ev: EvaluacionDetalle,
   pacienteNombre: string,
+  config?: ConfigMembrete,
 ) {
   const fecha = (f?: string | null) =>
     f ? new Date(f).toLocaleDateString("es-MX") : "—";
@@ -24,6 +25,7 @@ export function imprimirEvaluacion(
         <td style="text-align:center">${esc(s.puntuacion_directa ?? "—")}</td>
         <td style="text-align:center">${esc(s.puntuacion_escalar ?? "—")}</td>
         <td style="text-align:center">${esc(s.percentil ?? "—")}</td>
+        <td>${esc(s.categoria ?? "—")}</td>
       </tr>`,
     )
     .join("");
@@ -33,25 +35,13 @@ export function imprimirEvaluacion(
       ? `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
       : "<p>—</p>";
 
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<title>Reporte de evaluación - ${esc(pacienteNombre)}</title>
-<style>
-  *{font-family:Arial,Helvetica,sans-serif;color:#3d3d3d}
-  body{max-width:760px;margin:32px auto;padding:0 24px;line-height:1.5}
-  h1{color:#9B70C4;margin:0}
-  .sub{color:#888;font-size:13px;margin-top:2px}
-  h2{color:#9B70C4;font-size:15px;border-bottom:2px solid #eee;padding-bottom:4px;margin-top:24px}
-  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
-  th,td{border:1px solid #ddd;padding:6px 8px}
-  th{background:#f5eefb;text-align:left}
-  .meta{display:flex;flex-wrap:wrap;gap:8px 32px;font-size:13px;margin-top:12px}
-  .firma{margin-top:64px;border-top:1px solid #333;width:260px;text-align:center;padding-top:6px;font-size:13px}
-  @media print{body{margin:0}}
-</style></head><body onload="window.print()">
-  <h1>🐙 Ludimente</h1>
-  <p class="sub">Reporte de evaluación psicopedagógica</p>
+  const body = `
+  <p class="lm-doc-title">Reporte de evaluación psicopedagógica</p>
+  <p class="lm-doc-sub">${esc(tipoLabel(ev.tipo_prueba))}${
+    ev.nombre_personalizado ? ` · ${esc(ev.nombre_personalizado)}` : ""
+  }</p>
 
-  <div class="meta">
+  <div class="lm-meta">
     <span><strong>Paciente:</strong> ${esc(pacienteNombre)}</span>
     <span><strong>Instrumento:</strong> ${esc(tipoLabel(ev.tipo_prueba))}</span>
     <span><strong>Estatus:</strong> ${esc(ESTATUS_EVALUACION_LABEL[ev.estatus] ?? ev.estatus)}</span>
@@ -64,22 +54,24 @@ export function imprimirEvaluacion(
   ${
     ev.subpruebas.length
       ? `<h2>Resultados por subprueba</h2>
-  <table><thead><tr><th>Subprueba</th><th>P. directa</th><th>Escalar</th><th>Percentil</th></tr></thead>
+  <table><thead><tr><th>Subprueba / Índice</th><th>P. directa</th><th>Escalar</th><th>Percentil</th><th>Categoría</th></tr></thead>
   <tbody>${subFilas}</tbody></table>`
       : ""
   }
 
-  <h2>Fortalezas</h2>${lista(ev.fortalezas)}
-  <h2>Áreas de oportunidad</h2>${lista(ev.areas_oportunidad)}
+  <h2>¿Cómo salió? — Resultados</h2>
+  <p><strong>Fortalezas:</strong></p>${lista(ev.fortalezas)}
+  <p><strong>Áreas de oportunidad:</strong></p>${lista(ev.areas_oportunidad)}
+  ${ev.interpretacion_cualitativa ? `<p><strong>Interpretación cualitativa:</strong></p><p>${esc(ev.interpretacion_cualitativa)}</p>` : ""}
 
-  ${ev.interpretacion_cualitativa ? `<h2>Interpretación</h2><p>${esc(ev.interpretacion_cualitativa)}</p>` : ""}
-  ${ev.recomendaciones ? `<h2>Recomendaciones</h2><p>${esc(ev.recomendaciones)}</p>` : ""}
+  <h2>¿Qué necesita? — Recomendaciones</h2>
+  ${ev.recomendaciones ? `<p>${esc(ev.recomendaciones)}</p>` : "<p>—</p>"}
 
-  <div class="firma">Firma del profesional</div>
-</body></html>`;
+  <div class="lm-firma">Nombre y firma del profesional · Cédula profesional</div>`;
 
-  const win = window.open("", "_blank", "width=820,height=900");
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
+  abrirDocumentoMembretado({
+    titulo: `Reporte de evaluación - ${pacienteNombre}`,
+    bodyHtml: body,
+    config,
+  });
 }
