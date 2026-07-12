@@ -29,6 +29,12 @@ export async function portalLoginAction(
   });
 
   if (error) {
+    if (error.message?.includes("portal_bloqueado")) {
+      return {
+        error:
+          "Demasiados intentos incorrectos. Por seguridad, este acceso quedó bloqueado unos minutos. Vuelve a intentarlo más tarde.",
+      };
+    }
     return { error: "No pudimos validar el acceso. Inténtalo de nuevo." };
   }
 
