@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
+import { SugerenciaPlanBoton } from "@/components/planes/sugerencia-plan-boton";
 import { useConfiguracion } from "@/hooks/use-configuracion";
 import {
   useFormatosLlenados,
@@ -23,7 +24,11 @@ import {
 } from "@/hooks/use-formatos-llenados";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { FORMATOS, type Formato } from "@/lib/formatos/plantillas-formato";
-import { imprimirFormato, type RespuestasFormato } from "@/lib/print-formato";
+import {
+  imprimirFormato,
+  respuestasATexto,
+  type RespuestasFormato,
+} from "@/lib/print-formato";
 
 import { FormatoFiller } from "./formato-filler";
 
@@ -232,7 +237,9 @@ function ModalLlenar({
   const [valores, setValores] = useState<RespuestasFormato>(
     inicial?.respuestasMap ?? {},
   );
+  const [guardado, setGuardado] = useState(false);
 
+  const esEntrevistaInicial = formato.id === "entrevista-inicial";
   const pacienteNombre = pacientes.find((p) => p.id === pacienteId);
   const nombreStr = pacienteNombre
     ? `${pacienteNombre.nombre} ${pacienteNombre.apellido_paterno}`
@@ -257,7 +264,11 @@ function ModalLlenar({
       });
       toast.success("Formato guardado");
       if (imprimir) imprimirFormato(formato, config, valores, nombreStr);
-      onCerrar();
+      if (esEntrevistaInicial) {
+        setGuardado(true);
+      } else {
+        onCerrar();
+      }
     } catch {
       toast.error("No se pudo guardar (revisa permisos: admin o terapeuta)");
     }
@@ -292,6 +303,28 @@ function ModalLlenar({
         </div>
 
         <FormatoFiller formato={formato} valores={valores} onChange={set} />
+
+        {esEntrevistaInicial && guardado && (
+          <div className="rounded-lg border border-luda-lila/15 bg-luda-lila-light/30 p-3">
+            <p className="mb-2 text-xs text-luda-gris-light">
+              Entrevista guardada ✓. Puedes pedirle a la IA una propuesta de
+              plan de intervención (objetivos, sesiones y precio) con base en
+              esta información.
+            </p>
+            <SugerenciaPlanBoton
+              datos={{
+                nombrePaciente: nombreStr,
+                fechaNacimiento: pacienteNombre?.fecha_nacimiento,
+                motivoConsulta: pacienteNombre?.motivo_consulta,
+                diagnosticoPrincipal: pacienteNombre?.diagnostico_principal,
+                diagnosticosSecundarios:
+                  pacienteNombre?.diagnosticos_secundarios ?? undefined,
+                informacionMedica: pacienteNombre?.informacion_medica,
+                entrevistaRespuestas: respuestasATexto(formato, valores),
+              }}
+            />
+          </div>
+        )}
 
         <div className="sticky bottom-0 flex justify-end gap-2 border-t border-luda-lila/15 bg-white pt-3">
           <Button type="button" variant="ghost" onClick={onCerrar}>

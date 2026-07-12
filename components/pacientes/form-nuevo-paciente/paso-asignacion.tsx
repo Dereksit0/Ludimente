@@ -3,6 +3,7 @@
 import { useFormContext } from "react-hook-form";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
+import { SugerenciaPlanBoton } from "@/components/planes/sugerencia-plan-boton";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,9 +14,11 @@ import type { NuevoPacienteInput } from "@/lib/validations/paciente.schema";
 export function PasoAsignacion() {
   const {
     register,
+    watch,
     formState: { errors },
   } = useFormContext<NuevoPacienteInput>();
   const { data: psicologos, isLoading } = usePsicologos();
+  const datos = watch();
 
   return (
     <div className="space-y-5">
@@ -68,6 +71,24 @@ export function PasoAsignacion() {
           {...register("notas_generales")}
         />
       </Campo>
+
+      <div className="rounded-lg border border-luda-lila/15 bg-luda-lila-light/30 p-3">
+        <p className="mb-2 text-xs text-luda-gris-light">
+          Con los datos capturados en los pasos anteriores, la IA puede
+          proponer un borrador de plan de intervención (objetivos, sesiones y
+          precio estimado) antes de registrar al paciente.
+        </p>
+        <SugerenciaPlanBoton
+          datos={{
+            nombrePaciente: `${datos.nombre} ${datos.apellido_paterno}`.trim(),
+            fechaNacimiento: datos.fecha_nacimiento,
+            motivoConsulta: datos.motivo_consulta,
+            diagnosticoPrincipal: datos.diagnostico_principal,
+            diagnosticosSecundarios: datos.diagnosticos_secundarios,
+            informacionMedica: datos.informacion_medica,
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -110,6 +110,29 @@ function campoHtml(
   }
 }
 
+/** Serializa las respuestas de un formato llenado a texto plano (para IA, no impresión). */
+export function respuestasATexto(
+  formato: Formato,
+  respuestas: RespuestasFormato,
+): string {
+  const bloques: string[] = [];
+  formato.secciones.forEach((s, si) => {
+    const lineas: string[] = [];
+    s.campos.forEach((c, ci) => {
+      const val = respuestas[`${si}.${ci}`];
+      if (c.tipo === "texto" || c.tipo === "lineas") {
+        const texto = valorTexto(val).trim();
+        if (texto) lineas.push(`${c.label ? `${c.label}: ` : ""}${texto}`);
+      } else if (c.tipo === "checklist") {
+        const sel = Array.isArray(val) ? (val as string[]) : [];
+        if (sel.length) lineas.push(sel.join(", "));
+      }
+    });
+    if (lineas.length) bloques.push(`${s.titulo}:\n${lineas.join("\n")}`);
+  });
+  return bloques.join("\n\n");
+}
+
 /**
  * Abre una ventana imprimible con un formato.
  * Si `respuestas` es undefined → formato en blanco.
