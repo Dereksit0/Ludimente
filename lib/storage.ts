@@ -25,6 +25,21 @@ export async function subirArchivo(
   return path;
 }
 
+/** Extrae el storage path de una URL pública generada por `urlPublica`, o null si no aplica. */
+export function pathDeUrlPublica(bucket: string, url: string | null): string | null {
+  if (!url) return null;
+  const marcador = `/object/public/${bucket}/`;
+  const i = url.indexOf(marcador);
+  if (i === -1) return null;
+  return decodeURIComponent(url.slice(i + marcador.length));
+}
+
+/** Borra un objeto del bucket (ignora errores: el archivo puede ya no existir). */
+export async function borrarArchivo(bucket: string, path: string): Promise<void> {
+  const supabase = createClient();
+  await supabase.storage.from(bucket).remove([path]);
+}
+
 /** Genera una URL firmada temporal (por defecto 1 hora) para un objeto privado. */
 export async function urlFirmada(
   bucket: string,

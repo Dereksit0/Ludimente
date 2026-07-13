@@ -17,6 +17,7 @@ import { PulpitoPaciente } from "@/components/ui/pulpito-paciente";
 import { useCrearCita } from "@/hooks/use-citas";
 import { useSubirDocumento, type NuevoDocumento } from "@/hooks/use-documentos";
 import type { PacienteDetalle } from "@/hooks/use-pacientes";
+import { useRolActual } from "@/hooks/use-rol";
 import { useCrearSesion } from "@/hooks/use-sesiones";
 import { edadLegible } from "@/lib/fechas";
 import type { CitaInput } from "@/lib/validations/cita.schema";
@@ -33,6 +34,9 @@ export function ExpedienteHeader({ paciente }: { paciente: PacienteDetalle }) {
   const crearCita = useCrearCita();
   const crearSesion = useCrearSesion(paciente.id);
   const subirDoc = useSubirDocumento(paciente.id);
+  const { data: rol } = useRolActual();
+  // Las notas clínicas están vetadas a recepción (RLS: sesiones_no_recepcion).
+  const puedeNotas = rol !== "recepcionista";
 
   async function guardarCita(v: CitaInput) {
     try {
@@ -106,9 +110,11 @@ export function ExpedienteHeader({ paciente }: { paciente: PacienteDetalle }) {
           <Button size="sm" onClick={() => setModal("cita")}>
             <CalendarPlus /> <span className="hidden sm:inline">Nueva cita</span>
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setModal("nota")}>
-            <NotebookPen /> <span className="hidden sm:inline">Nueva nota</span>
-          </Button>
+          {puedeNotas && (
+            <Button size="sm" variant="outline" onClick={() => setModal("nota")}>
+              <NotebookPen /> <span className="hidden sm:inline">Nueva nota</span>
+            </Button>
+          )}
           <Button size="sm" variant="outline" onClick={() => setModal("doc")}>
             <FilePlus2 /> <span className="hidden sm:inline">Subir doc</span>
           </Button>

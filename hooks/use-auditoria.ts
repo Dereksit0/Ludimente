@@ -11,6 +11,8 @@ export interface EventoAuditoria {
   accion: string;
   usuario_id: string | null;
   usuario_nombre: string;
+  datos_antes: Record<string, unknown> | null;
+  datos_despues: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -27,7 +29,9 @@ export function useAuditoria(filtros: FiltrosAuditoria = {}) {
       const supabase = createClient();
       let q = supabase
         .from("audit_log")
-        .select("id, tabla, registro_id, accion, usuario_id, created_at")
+        .select(
+          "id, tabla, registro_id, accion, usuario_id, datos_antes, datos_despues, created_at",
+        )
         .order("created_at", { ascending: false })
         .limit(100);
       if (filtros.tabla) q = q.eq("tabla", filtros.tabla);
@@ -47,6 +51,8 @@ export function useAuditoria(filtros: FiltrosAuditoria = {}) {
 
       return (data ?? []).map((e) => ({
         ...e,
+        datos_antes: e.datos_antes as Record<string, unknown> | null,
+        datos_despues: e.datos_despues as Record<string, unknown> | null,
         usuario_nombre: e.usuario_id
           ? (mapa.get(e.usuario_id) ?? "Usuario")
           : "Sistema",

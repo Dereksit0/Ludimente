@@ -51,6 +51,37 @@ export interface PortalConsentimiento {
   fecha: string | null;
 }
 
+export interface PortalObjetivo {
+  descripcion: string;
+  area: string;
+  prioridad: string;
+  estatus: string;
+  progreso: number;
+}
+
+export interface PortalPlan {
+  titulo: string;
+  descripcion: string | null;
+  estatus: string;
+  fechaInicio: string;
+  objetivos: PortalObjetivo[];
+}
+
+export interface PortalSolicitud {
+  fechaPreferida: string | null;
+  nota: string | null;
+  estatus: string;
+  creado: string;
+}
+
+export interface PortalRecurso {
+  titulo: string;
+  descripcion: string | null;
+  categoria: string;
+  url: string | null;
+  etiquetas: string[];
+}
+
 export async function obtenerAvances(pacienteId: string): Promise<PortalAvance[]> {
   const db = createAdminClient();
   const { data } = await db
@@ -58,6 +89,7 @@ export async function obtenerAvances(pacienteId: string): Promise<PortalAvance[]
     .select("fecha_sesion, area_trabajo, logros_sesion, recomendaciones_casa, nivel_participacion, borrador")
     .eq("paciente_id", pacienteId)
     .eq("borrador", false)
+    .is("deleted_at", null)
     .order("fecha_sesion", { ascending: false })
     .limit(20);
 
@@ -159,6 +191,103 @@ export async function obtenerConsentimientos(
     tipo: c.tipo,
     firmado: c.firmado,
     fecha: c.firmado_at,
+  }));
+}
+
+/** Plan de intervención vigente (o el más reciente) con sus objetivos y avance. */
+export async function obtenerPlanActivo(
+  pacienteId: string,
+): Promise<PortalPlan | null> {
+  const db = createAdminClient();
+  const { data: planes } = await db
+    .from("planes_intervencion")
+    .select("id, titulo, descripcion, estatus, fecha_inicio, created_at")
+    .eq("paciente_id", pacienteId)
+    .order("created_at", { ascending: false });
+
+  if (!planes || planes.length === 0) return null;
+  const plan = planes.find((p) => p.estatus === "activo") ?? planes[0];
+
+  const { data: objetivos } = await db
+    .from("objetivos_intervencion")
+    .select("descripcion, area, prioridad, estatus, progreso, orden")
+    .eq("plan_id", plan.id)
+    .order("orden", { ascending: true });
+
+  return {
+    titulo: plan.titulo,
+    descripcion: plan.descripcion,
+    estatus: plan.estatus,
+    fechaInicio: plan.fecha_inicio,
+    objetivos: (objetivos ?? []).map((o) => ({
+      descripcion: o.descripcion,
+      area: o.area,
+      prioridad: o.prioridad,
+      estatus: o.estatus,
+      progreso: o.progreso,
+    })),
+  };
+}
+
+/** Últimas solicitudes de cita que hizo el padre, con su estatus real. */
+export async function obtenerSolicitudesCita(
+  pacienteId: string,
+): Promise<PortalSolicitud[]> {
+  const db = createAdminClient();
+  const { data } = await db
+    .from("solicitudes_cita")
+    .select("fecha_preferida, nota, estatus, created_at")
+    .eq("paciente_id", pacienteId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  return (data ?? []).map((s) => ({
+    fechaPreferida: s.fecha_preferida,
+    nota: s.nota,
+    estatus: s.estatus,
+    creado: s.created_at,
+  }));
+}
+
+/** Recursos de la biblioteca acordes a la edad del paciente. */
+export async function obtenerRecursosParaFamilia(
+  pacienteId: string,
+): Promise<PortalRecurso[]> {
+  const db = createAdminClient();
+  const { data: pac } = await db
+    .from("pacientes")
+    .select("fecha_nacimiento")
+    .eq("id", pacienteId)
+    .maybeSingle();
+
+  let edad: number | null = null;
+  if (pac?.fecha_nacimiento) {
+    const nacimiento = new Date(pac.fecha_nacimiento);
+    const hoy = new Date();
+    edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const m = hoy.getMonth() - nacimiento.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < nacimiento.getDate())) edad--;
+  }
+
+  const { data } = await db
+    .from("recursos")
+    .select("titulo, descripcion, categoria, url, etiquetas, edad_min, edad_max")
+    .order("created_at", { ascending: false })
+    .limit(40);
+
+  const acordes = (data ?? []).filter((r) => {
+    if (edad === null) return true;
+    if (r.edad_min !== null && edad < r.edad_min) return false;
+    if (r.edad_max !== null && edad > r.edad_max) return false;
+    return true;
+  });
+
+  return acordes.slice(0, 8).map((r) => ({
+    titulo: r.titulo,
+    descripcion: r.descripcion,
+    categoria: r.categoria,
+    url: r.url,
+    etiquetas: r.etiquetas,
   }));
 }
 

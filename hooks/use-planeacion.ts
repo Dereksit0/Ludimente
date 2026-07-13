@@ -94,12 +94,16 @@ export function useActualizarPlaneacion() {
   });
 }
 
+/** Archiva la planeación (no la borra: `activo=false`) para conservar el historial. */
 export function useEliminarPlaneacion() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
       const supabase = createClient();
-      const { error } = await supabase.from("planeaciones").delete().eq("id", id);
+      const { error } = await supabase
+        .from("planeaciones")
+        .update({ activo: false })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),

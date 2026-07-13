@@ -8,8 +8,14 @@ import type { Rol } from "@/types/database.types";
 // se redirige a su pantalla de inicio.
 const RESTRICCIONES: { prefijo: string; roles: Rol[] }[] = [
   { prefijo: "/cobranza", roles: ["admin"] },
+  { prefijo: "/finanzas", roles: ["admin"] },
   { prefijo: "/evaluaciones", roles: ["admin", "psicologo"] },
   { prefijo: "/reportes", roles: ["admin", "psicologo"] },
+  { prefijo: "/consentimientos", roles: ["admin", "recepcionista"] },
+  { prefijo: "/terapeutas", roles: ["admin"] },
+  { prefijo: "/tamizaje", roles: ["admin", "psicologo"] },
+  { prefijo: "/planes", roles: ["admin", "psicologo"] },
+  { prefijo: "/progreso", roles: ["admin", "psicologo"] },
   { prefijo: "/configuracion", roles: ["admin"] },
   { prefijo: "/dashboard", roles: ["admin", "psicologo", "recepcionista"] },
 ];

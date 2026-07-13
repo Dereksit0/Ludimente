@@ -59,6 +59,24 @@ export function useTamizajes() {
   });
 }
 
+/** Historial de tamizajes de un paciente (más reciente primero). */
+export function useTamizajesPaciente(pacienteId: string) {
+  return useQuery({
+    queryKey: ["tamizajes", "paciente", pacienteId],
+    enabled: Boolean(pacienteId),
+    queryFn: async (): Promise<Tamizaje[]> => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("tamizajes")
+        .select("*")
+        .eq("paciente_id", pacienteId)
+        .order("fecha", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
 export function useCrearTamizaje() {
   const qc = useQueryClient();
   return useMutation({

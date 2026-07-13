@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 import {
+  crearPlanDesdeSugerencia,
   sugerirPlanIntervencion,
   type InputSugerenciaPlan,
 } from "@/app/(sistema)/pacientes/sugerencia-plan-actions";
@@ -21,14 +23,19 @@ import {
 /** Botón que pide a la IA un borrador de plan de intervención y lo muestra en un modal. */
 export function SugerenciaPlanBoton({
   datos,
+  pacienteId,
   variant = "outline",
   size = "sm",
 }: {
   datos: InputSugerenciaPlan;
+  /** Si se pasa (paciente ya existe), permite crear el plan real con un clic. */
+  pacienteId?: string;
   variant?: "outline" | "default" | "ghost";
   size?: "sm" | "default";
 }) {
+  const router = useRouter();
   const [cargando, setCargando] = useState(false);
+  const [creando, setCreando] = useState(false);
   const [resultado, setResultado] = useState<SugerenciaPlan | null>(null);
   const [abierto, setAbierto] = useState(false);
 
@@ -42,6 +49,20 @@ export function SugerenciaPlanBoton({
     }
     setResultado(res.data);
     setAbierto(true);
+  }
+
+  async function crearPlan() {
+    if (!pacienteId || !resultado) return;
+    setCreando(true);
+    const res = await crearPlanDesdeSugerencia(pacienteId, resultado);
+    setCreando(false);
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    toast.success("Plan creado a partir de la sugerencia");
+    setAbierto(false);
+    router.push(`/planes/${res.planId}`);
   }
 
   return (
@@ -131,10 +152,15 @@ export function SugerenciaPlanBoton({
               </p>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setAbierto(false)}>
                 Cerrar
               </Button>
+              {pacienteId && (
+                <Button type="button" onClick={crearPlan} disabled={creando}>
+                  {creando ? "Creando plan…" : "Crear plan con esta propuesta"}
+                </Button>
+              )}
             </div>
           </div>
         </Modal>

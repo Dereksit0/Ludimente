@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,6 +29,7 @@ import {
   PLANTILLA_CONSENTIMIENTO,
   TIPO_CONSENTIMIENTO_LABEL,
   TIPO_CONSENTIMIENTO_OPCIONES,
+  TIPO_CONSENTIMIENTO_REQUIERE_DECISION,
 } from "@/lib/catalogos";
 import { imprimirConsentimiento } from "@/lib/print-consentimiento";
 import { consentimientoSchema, primerError } from "@/lib/validations/modulos.schema";
@@ -43,6 +44,17 @@ export function ConsentimientosCliente() {
   const [busqueda, setBusqueda] = useState("");
   const [crear, setCrear] = useState(false);
   const [firmar, setFirmar] = useState<ConsentimientoListItem | null>(null);
+  const [pacientePreseleccionado, setPacientePreseleccionado] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("paciente");
+    if (id) {
+      setPacientePreseleccionado(id);
+      setCrear(true);
+    }
+  }, []);
 
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -55,16 +67,22 @@ export function ConsentimientosCliente() {
     );
   }, [lista, busqueda]);
 
-  async function borrar(id: string) {
+  async function borrar(c: ConsentimientoListItem) {
     const ok = await confirmar({
       titulo: "Eliminar consentimiento",
-      mensaje: "¿Eliminar este documento? Esta acción no se puede deshacer.",
+      mensaje: c.firmado
+        ? `Este documento YA ESTÁ FIRMADO por ${c.firmante_nombre ?? "el tutor"}. Eliminarlo borra el registro legal/clínico de esa firma de forma permanente. ¿Seguro que quieres eliminarlo?`
+        : "¿Eliminar este documento? Esta acción no se puede deshacer.",
       confirmar: "Eliminar",
       peligro: true,
     });
     if (!ok) return;
-    await eliminar.mutateAsync(id);
-    toast.success("Consentimiento eliminado");
+    try {
+      await eliminar.mutateAsync(c.id);
+      toast.success("Consentimiento eliminado");
+    } catch {
+      toast.error("No se pudo eliminar (revisa permisos: admin o recepción)");
+    }
   }
 
   return (
@@ -134,6 +152,17 @@ export function ConsentimientosCliente() {
                   }`
                 : "Pendiente de firma"}
             </span>
+            {c.firmado && c.decision && (
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  c.decision === "acepta"
+                    ? "bg-green-50 text-green-700"
+                    : "bg-red-50 text-red-600"
+                }`}
+              >
+                {c.decision === "acepta" ? "Sí acepta" : "No acepta"}
+              </span>
+            )}
             {!c.firmado && (
               <Button size="sm" variant="outline" onClick={() => setFirmar(c)}>
                 <Pen className="h-4 w-4" /> Firmar
@@ -150,7 +179,7 @@ export function ConsentimientosCliente() {
               variant="ghost"
               size="icon"
               aria-label="Eliminar"
-              onClick={() => borrar(c.id)}
+              onClick={() => borrar(c)}
               className="h-9 w-9 text-luda-gris-light hover:bg-red-50 hover:text-red-500"
             >
               <Trash2 className="h-4 w-4" />
@@ -159,7 +188,12 @@ export function ConsentimientosCliente() {
         ))}
       </div>
 
-      {crear && <ModalNuevo onCerrar={() => setCrear(false)} />}
+      {crear && (
+        <ModalNuevo
+          pacienteInicial={pacientePreseleccionado ?? undefined}
+          onCerrar={() => setCrear(false)}
+        />
+      )}
       {firmar && (
         <ModalFirmar
           consentimiento={firmar}
@@ -170,11 +204,17 @@ export function ConsentimientosCliente() {
   );
 }
 
-function ModalNuevo({ onCerrar }: { onCerrar: () => void }) {
+function ModalNuevo({
+  pacienteInicial,
+  onCerrar,
+}: {
+  pacienteInicial?: string;
+  onCerrar: () => void;
+}) {
   const { data: pacientes = [] } = usePacientes();
   const crear = useCrearConsentimiento();
 
-  const [pacienteId, setPacienteId] = useState("");
+  const [pacienteId, setPacienteId] = useState(pacienteInicial ?? "");
   const [tipo, setTipo] = useState("consentimiento_informado");
   const [titulo, setTitulo] = useState(
     TIPO_CONSENTIMIENTO_LABEL["consentimiento_informado"],
@@ -182,11 +222,15 @@ function ModalNuevo({ onCerrar }: { onCerrar: () => void }) {
   const [contenido, setContenido] = useState(
     PLANTILLA_CONSENTIMIENTO["consentimiento_informado"],
   );
+  const [requiereDecision, setRequiereDecision] = useState(
+    TIPO_CONSENTIMIENTO_REQUIERE_DECISION["consentimiento_informado"] ?? false,
+  );
 
   function cambiarTipo(nuevo: string) {
     setTipo(nuevo);
     setTitulo(TIPO_CONSENTIMIENTO_LABEL[nuevo] ?? "");
     setContenido(PLANTILLA_CONSENTIMIENTO[nuevo] ?? "");
+    setRequiereDecision(TIPO_CONSENTIMIENTO_REQUIERE_DECISION[nuevo] ?? false);
   }
 
   async function guardar(e: React.FormEvent) {
@@ -202,6 +246,7 @@ function ModalNuevo({ onCerrar }: { onCerrar: () => void }) {
         tipo,
         titulo: titulo.trim(),
         contenido: contenido.trim() || null,
+        requiere_decision: requiereDecision,
       });
       toast.success("Consentimiento creado");
       onCerrar();
@@ -268,6 +313,16 @@ function ModalNuevo({ onCerrar }: { onCerrar: () => void }) {
           />
         </div>
 
+        <label className="flex items-center gap-2 text-sm text-luda-gris">
+          <input
+            type="checkbox"
+            checked={requiereDecision}
+            onChange={(e) => setRequiereDecision(e.target.checked)}
+            className="h-4 w-4 accent-luda-lila"
+          />
+          Este documento pide marcar &ldquo;sí acepto / no acepto&rdquo; al firmar
+        </label>
+
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onCerrar}>
             Cancelar
@@ -294,6 +349,9 @@ function ModalFirmar({
   const [parentesco, setParentesco] = useState(
     consentimiento.firmante_parentesco ?? "Madre",
   );
+  const [decision, setDecision] = useState<"acepta" | "no_acepta" | "">(
+    consentimiento.decision ?? "",
+  );
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
@@ -306,12 +364,17 @@ function ModalFirmar({
       toast.error("Escribe el nombre del firmante");
       return;
     }
+    if (consentimiento.requiere_decision && !decision) {
+      toast.error("Marca si acepta o no acepta");
+      return;
+    }
     try {
       await firmar.mutateAsync({
         id: consentimiento.id,
         firma_data: firma,
         firmante_nombre: nombre.trim(),
         firmante_parentesco: parentesco,
+        decision: consentimiento.requiere_decision ? decision || null : null,
       });
       toast.success("Consentimiento firmado");
       onCerrar();
@@ -351,6 +414,34 @@ function ModalFirmar({
             </Select>
           </div>
         </div>
+        {consentimiento.requiere_decision && (
+          <div className="space-y-1.5">
+            <Label>Decisión del firmante</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-1.5 text-sm text-luda-gris">
+                <input
+                  type="radio"
+                  name="decision"
+                  checked={decision === "acepta"}
+                  onChange={() => setDecision("acepta")}
+                  className="h-4 w-4 accent-luda-lila"
+                />
+                Sí acepto
+              </label>
+              <label className="flex items-center gap-1.5 text-sm text-luda-gris">
+                <input
+                  type="radio"
+                  name="decision"
+                  checked={decision === "no_acepta"}
+                  onChange={() => setDecision("no_acepta")}
+                  className="h-4 w-4 accent-luda-lila"
+                />
+                No acepto
+              </label>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-1.5">
           <Label>Firma</Label>
           <FirmaCanvas ref={firmaRef} />

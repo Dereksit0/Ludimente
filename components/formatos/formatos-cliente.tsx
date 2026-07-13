@@ -239,7 +239,8 @@ function ModalLlenar({
   );
   const [guardado, setGuardado] = useState(false);
 
-  const esEntrevistaInicial = formato.id === "entrevista-inicial";
+  const esEntrevistaInicial =
+    formato.id === "entrevista-inicial" || formato.id === "entrevista-adultos";
   const pacienteNombre = pacientes.find((p) => p.id === pacienteId);
   const nombreStr = pacienteNombre
     ? `${pacienteNombre.nombre} ${pacienteNombre.apellido_paterno}`
@@ -312,6 +313,7 @@ function ModalLlenar({
               esta información.
             </p>
             <SugerenciaPlanBoton
+              pacienteId={pacienteId}
               datos={{
                 nombrePaciente: nombreStr,
                 fechaNacimiento: pacienteNombre?.fecha_nacimiento,

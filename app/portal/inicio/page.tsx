@@ -4,12 +4,14 @@ import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
+  BookOpen,
   CreditCard,
   FileSignature,
   FileText,
   LineChart,
   LogOut,
   Sparkles,
+  Target,
 } from "lucide-react";
 
 import {
@@ -24,14 +26,28 @@ import {
   obtenerConsentimientos,
   obtenerDocumentos,
   obtenerPagos,
+  obtenerPlanActivo,
   obtenerProximasCitas,
+  obtenerRecursosParaFamilia,
   obtenerReportesProgreso,
+  obtenerSolicitudesCita,
 } from "@/lib/portal/data";
 import { leerSesionPortal } from "@/lib/portal/session";
 import { infoLimitePago, mensajeRecordatorioPago } from "@/lib/pagos-limite";
 import { PortalCitas } from "@/components/portal/portal-citas";
-import { ESTATUS_PAGO_CLASES, ESTATUS_PAGO_LABEL } from "@/types/app.types";
-import type { EstatusPago } from "@/types/database.types";
+import {
+  AREA_OBJETIVO_LABEL,
+  ESTATUS_PAGO_CLASES,
+  ESTATUS_PAGO_LABEL,
+  ESTATUS_PLAN_LABEL,
+  PRIORIDAD_OBJETIVO_LABEL,
+} from "@/types/app.types";
+import type {
+  AreaObjetivo,
+  EstatusPago,
+  EstatusPlan,
+  PrioridadObjetivo,
+} from "@/types/database.types";
 
 import { portalLogoutAction } from "../actions";
 
@@ -57,15 +73,27 @@ export default async function PortalInicioPage() {
   const sesion = leerSesionPortal();
   if (!sesion) redirect("/portal");
 
-  const [avances, citas, documentos, pagos, reportes, consentimientos] =
-    await Promise.all([
-      obtenerAvances(sesion.pid),
-      obtenerProximasCitas(sesion.pid),
-      obtenerDocumentos(sesion.pid),
-      obtenerPagos(sesion.pid),
-      obtenerReportesProgreso(sesion.pid),
-      obtenerConsentimientos(sesion.pid),
-    ]);
+  const [
+    avances,
+    citas,
+    documentos,
+    pagos,
+    reportes,
+    consentimientos,
+    plan,
+    solicitudes,
+    recursos,
+  ] = await Promise.all([
+    obtenerAvances(sesion.pid),
+    obtenerProximasCitas(sesion.pid),
+    obtenerDocumentos(sesion.pid),
+    obtenerPagos(sesion.pid),
+    obtenerReportesProgreso(sesion.pid),
+    obtenerConsentimientos(sesion.pid),
+    obtenerPlanActivo(sesion.pid),
+    obtenerSolicitudesCita(sesion.pid),
+    obtenerRecursosParaFamilia(sesion.pid),
+  ]);
 
   return (
     <main className="min-h-screen bg-luda-fondo">
@@ -94,7 +122,68 @@ export default async function PortalInicioPage() {
 
       <div className="mx-auto max-w-4xl space-y-6 px-6 py-8">
         {/* Próximas citas (confirmar / solicitar) */}
-        <PortalCitas citas={citas} />
+        <PortalCitas citas={citas} solicitudes={solicitudes} />
+
+        {/* Plan de intervención */}
+        {plan && (
+          <LudaCard>
+            <LudaCardHeader>
+              <LudaCardTitle className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-luda-lila-dark" /> Plan de
+                  intervención
+                </span>
+                <span className="rounded-full bg-luda-lila-light px-2.5 py-0.5 text-xs font-semibold text-luda-lila-dark">
+                  {ESTATUS_PLAN_LABEL[plan.estatus as EstatusPlan] ?? plan.estatus}
+                </span>
+              </LudaCardTitle>
+            </LudaCardHeader>
+            <LudaCardContent className="space-y-3">
+              <p className="text-sm font-bold text-luda-gris">{plan.titulo}</p>
+              {plan.descripcion && (
+                <p className="text-sm text-luda-gris">{plan.descripcion}</p>
+              )}
+              {plan.objetivos.length === 0 ? (
+                <p className="text-sm text-luda-gris-light">
+                  Este plan todavía no tiene objetivos registrados.
+                </p>
+              ) : (
+                <div className="space-y-2.5">
+                  {plan.objetivos.map((o, i) => (
+                    <div key={i} className="rounded-xl border border-luda-lila/15 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-luda-gris">
+                          {o.descripcion}
+                        </p>
+                        <span className="shrink-0 text-xs font-semibold text-luda-gris-light">
+                          {o.progreso}%
+                        </span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-full border border-luda-lila/20 bg-luda-lila-light/60 px-2 py-0.5 text-[11px] font-semibold text-luda-lila-dark">
+                          {AREA_OBJETIVO_LABEL[o.area as AreaObjetivo] ?? o.area}
+                        </span>
+                        <span className="rounded-full border border-luda-lila/20 px-2 py-0.5 text-[11px] font-semibold text-luda-gris-light">
+                          Prioridad{" "}
+                          {(
+                            PRIORIDAD_OBJETIVO_LABEL[o.prioridad as PrioridadObjetivo] ??
+                            o.prioridad
+                          ).toLowerCase()}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-luda-lila-light">
+                        <div
+                          className="h-full rounded-full bg-luda-lila"
+                          style={{ width: `${o.progreso}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </LudaCardContent>
+          </LudaCard>
+        )}
 
         {/* Avances */}
         <LudaCard>
@@ -241,6 +330,43 @@ export default async function PortalInicioPage() {
             )}
           </LudaCardContent>
         </LudaCard>
+
+        {/* Recursos para casa */}
+        {recursos.length > 0 && (
+          <LudaCard>
+            <LudaCardHeader>
+              <LudaCardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-luda-lila-dark" /> Recursos
+                para casa
+              </LudaCardTitle>
+            </LudaCardHeader>
+            <LudaCardContent className="space-y-2">
+              {recursos.map((r, i) =>
+                r.url ? (
+                  <a
+                    key={i}
+                    href={r.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block rounded-xl bg-luda-fondo px-4 py-3 transition-colors hover:bg-luda-lila-light"
+                  >
+                    <p className="text-sm font-bold text-luda-gris">{r.titulo}</p>
+                    {r.descripcion && (
+                      <p className="text-xs text-luda-gris-light">{r.descripcion}</p>
+                    )}
+                  </a>
+                ) : (
+                  <div key={i} className="rounded-xl bg-luda-fondo px-4 py-3">
+                    <p className="text-sm font-bold text-luda-gris">{r.titulo}</p>
+                    {r.descripcion && (
+                      <p className="text-xs text-luda-gris-light">{r.descripcion}</p>
+                    )}
+                  </div>
+                ),
+              )}
+            </LudaCardContent>
+          </LudaCard>
+        )}
 
         {/* Documentos */}
         <LudaCard>

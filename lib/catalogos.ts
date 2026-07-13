@@ -102,11 +102,20 @@ export const ESTATUS_PACIENTE_OPCIONES = [
 // ── Citas ──
 export const TIPO_CITA_OPCIONES = [
   { value: "evaluacion_inicial", label: "Evaluación inicial" },
-  { value: "sesion_intervencion", label: "Sesión de intervención" },
+  { value: "entrevista_adultos", label: "Entrevista inicial (adultos)" },
+  { value: "sesion_intervencion", label: "Terapia" },
+  { value: "terapia_lenguaje", label: "Terapia de lenguaje" },
+  { value: "terapia_ocupacional", label: "Terapia ocupacional" },
+  { value: "terapia_conductual", label: "Terapia conductual" },
+  { value: "terapia_psicologica_adultos", label: "Terapia psicológica (adultos)" },
+  { value: "terapia_familiar", label: "Terapia familiar" },
+  { value: "valoracion_neuropsicologica", label: "Valoración neuropsicológica" },
   { value: "devolucion_resultados", label: "Devolución de resultados" },
   { value: "seguimiento", label: "Seguimiento" },
   { value: "entrevista_padres", label: "Entrevista con padres" },
+  { value: "asesoria_escolar", label: "Asesoría escolar" },
   { value: "taller", label: "Taller" },
+  { value: "urgencia", label: "Consulta de urgencia" },
   { value: "otro", label: "Otro" },
 ] as const;
 
@@ -124,13 +133,22 @@ export const ESTATUS_CITA_OPCIONES = [
   { value: "reagendada", label: "Reagendada" },
 ] as const;
 
-/** Duraciones de cita en minutos. */
+/** Duraciones de cita en minutos (hasta 6 horas). */
 export const DURACION_OPCIONES = [
   { value: 30, label: "30 min" },
   { value: 45, label: "45 min" },
   { value: 50, label: "50 min" },
   { value: 60, label: "1 hora" },
   { value: 90, label: "1 hora 30 min" },
+  { value: 120, label: "2 horas" },
+  { value: 150, label: "2 horas 30 min" },
+  { value: 180, label: "3 horas" },
+  { value: 210, label: "3 horas 30 min" },
+  { value: 240, label: "4 horas" },
+  { value: 270, label: "4 horas 30 min" },
+  { value: 300, label: "5 horas" },
+  { value: 330, label: "5 horas 30 min" },
+  { value: 360, label: "6 horas" },
 ] as const;
 
 // ── Pagos ──
@@ -152,7 +170,10 @@ export const ESTATUS_PAGO_OPCIONES = [
 /** Conceptos de pago frecuentes (autocompletado + libre). */
 export const CONCEPTOS_PAGO = [
   "Evaluación inicial",
-  "Sesión de intervención",
+  "Terapia",
+  "Terapia de lenguaje",
+  "Terapia ocupacional",
+  "Terapia psicológica (adultos)",
   "Seguimiento",
   "Devolución de resultados",
   "Entrevista con padres",
@@ -419,6 +440,16 @@ Marque su decisión:
 ( ) NO autorizo. (El menor no aparecerá en publicaciones del centro.)`,
 
   otro: "",
+};
+
+/** Tipos de consentimiento cuyo texto incluye opciones de "sí acepto / no acepto". */
+export const TIPO_CONSENTIMIENTO_REQUIERE_DECISION: Record<string, boolean> = {
+  consentimiento_informado: false,
+  aviso_privacidad: false,
+  autorizacion_evaluacion: false,
+  autorizacion_imagenes: true,
+  autorizacion_redes_sociales: true,
+  otro: false,
 };
 
 // ── Gastos ──

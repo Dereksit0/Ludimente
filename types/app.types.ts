@@ -56,11 +56,20 @@ export const ESTATUS_PACIENTE_CLASES: Record<EstatusPaciente, string> = {
 
 export const TIPO_CITA_LABEL: Record<string, string> = {
   evaluacion_inicial: "Evaluación inicial",
-  sesion_intervencion: "Sesión de intervención",
+  entrevista_adultos: "Entrevista inicial (adultos)",
+  sesion_intervencion: "Terapia",
+  terapia_lenguaje: "Terapia de lenguaje",
+  terapia_ocupacional: "Terapia ocupacional",
+  terapia_conductual: "Terapia conductual",
+  terapia_psicologica_adultos: "Terapia psicológica (adultos)",
+  terapia_familiar: "Terapia familiar",
+  valoracion_neuropsicologica: "Valoración neuropsicológica",
   devolucion_resultados: "Devolución de resultados",
   seguimiento: "Seguimiento",
   entrevista_padres: "Entrevista con padres",
+  asesoria_escolar: "Asesoría escolar",
   taller: "Taller",
+  urgencia: "Consulta de urgencia",
   otro: "Otro",
 };
 

@@ -7,6 +7,7 @@ import { LudaCard, LudaCardContent, LudaCardHeader, LudaCardTitle } from "@/comp
 import { Select } from "@/components/ui/select";
 import { useActualizarPaciente, type PacienteDetalle } from "@/hooks/use-pacientes";
 import { usePsicologos } from "@/hooks/use-perfiles";
+import { useRolActual } from "@/hooks/use-rol";
 import { ESTATUS_PACIENTE_OPCIONES } from "@/lib/catalogos";
 import { fechaLarga } from "@/lib/fechas";
 import type { EstatusPaciente, TablesUpdate } from "@/types/database.types";
@@ -14,6 +15,9 @@ import type { EstatusPaciente, TablesUpdate } from "@/types/database.types";
 export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
   const actualizar = useActualizarPaciente(paciente.id);
   const { data: psicologos } = usePsicologos();
+  const { data: rol } = useRolActual();
+  // Recepción solo tiene lectura sobre pacientes (sin UPDATE en RLS).
+  const soloLectura = rol === "recepcionista";
 
   async function guardar(cambios: TablesUpdate<"pacientes">, ok = "Actualizado ⭐") {
     try {
@@ -38,6 +42,7 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
             </p>
             <Select
               value={paciente.estatus}
+              disabled={soloLectura}
               onChange={(e) =>
                 guardar({ estatus: e.target.value as EstatusPaciente })
               }
@@ -55,6 +60,7 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
             </p>
             <Select
               value={paciente.psicologo_asignado_id ?? ""}
+              disabled={soloLectura}
               onChange={(e) =>
                 guardar({ psicologo_asignado_id: e.target.value || null })
               }
@@ -78,6 +84,7 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
         <LudaCardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="space-y-1">
             <CampoEditable
+              soloLectura={soloLectura}
               label="Cumpleaños"
               valor={paciente.fecha_nacimiento}
               tipo="date"
@@ -88,16 +95,19 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
             </p>
           </div>
           <CampoEditable
+            soloLectura={soloLectura}
             label="Escuela"
             valor={paciente.escuela}
             onGuardar={(v) => guardar({ escuela: v || null })}
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Grado escolar"
             valor={paciente.grado_escolar}
             onGuardar={(v) => guardar({ grado_escolar: v || null })}
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Motivo de consulta"
             valor={paciente.motivo_consulta}
             tipo="textarea"
@@ -114,21 +124,25 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
         </LudaCardHeader>
         <LudaCardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <CampoEditable
+            soloLectura={soloLectura}
             label="Diagnóstico principal"
             valor={paciente.diagnostico_principal}
             onGuardar={(v) => guardar({ diagnostico_principal: v || null })}
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Alergias"
             valor={paciente.alergias}
             onGuardar={(v) => guardar({ alergias: v || null })}
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Medicamentos"
             valor={paciente.medicamentos}
             onGuardar={(v) => guardar({ medicamentos: v || null })}
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Antecedentes terapéuticos o clínicos"
             valor={paciente.antecedentes}
             tipo="textarea"
@@ -137,6 +151,7 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
             className="sm:col-span-2"
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Información médica relevante"
             valor={paciente.informacion_medica}
             tipo="textarea"
@@ -144,6 +159,7 @@ export function InfoTab({ paciente }: { paciente: PacienteDetalle }) {
             className="sm:col-span-2"
           />
           <CampoEditable
+            soloLectura={soloLectura}
             label="Notas generales"
             valor={paciente.notas_generales}
             tipo="textarea"

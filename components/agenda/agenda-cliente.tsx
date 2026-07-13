@@ -500,38 +500,48 @@ export function AgendaCliente() {
             )}
 
             <div className="flex flex-wrap gap-2 pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setEditando(detalle);
-                  setDetalle(null);
-                  setFormAbierto(true);
-                }}
-              >
-                Editar
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setEstatusSimple(detalle, "confirmada")}>
-                Confirmar
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => completarYcobrar(detalle)}>
-                Completar y cobrar
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => { setMotivoTexto(""); setMotivoPara({ cita: detalle, estatus: "no_asistio" }); }}
-              >
-                No asistió
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-red-500 hover:bg-red-50"
-                onClick={() => { setMotivoTexto(""); setMotivoPara({ cita: detalle, estatus: "cancelada" }); }}
-              >
-                Cancelar cita
-              </Button>
+              {detalle.estatus !== "completada" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setEditando(detalle);
+                    setDetalle(null);
+                    setFormAbierto(true);
+                  }}
+                >
+                  Editar
+                </Button>
+              )}
+              {detalle.estatus === "programada" && (
+                <Button size="sm" variant="outline" onClick={() => setEstatusSimple(detalle, "confirmada")}>
+                  Confirmar
+                </Button>
+              )}
+              {(detalle.estatus === "programada" || detalle.estatus === "confirmada") && (
+                <Button size="sm" variant="outline" onClick={() => completarYcobrar(detalle)}>
+                  Completar y cobrar
+                </Button>
+              )}
+              {(detalle.estatus === "programada" || detalle.estatus === "confirmada") && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setMotivoTexto(""); setMotivoPara({ cita: detalle, estatus: "no_asistio" }); }}
+                >
+                  No asistió
+                </Button>
+              )}
+              {(detalle.estatus === "programada" || detalle.estatus === "confirmada") && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-500 hover:bg-red-50"
+                  onClick={() => { setMotivoTexto(""); setMotivoPara({ cita: detalle, estatus: "cancelada" }); }}
+                >
+                  Cancelar cita
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="ghost"

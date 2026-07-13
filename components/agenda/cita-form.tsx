@@ -31,8 +31,16 @@ export function CitaForm({
   guardando,
   onGuardar,
 }: CitaFormProps) {
-  const { data: pacientes = [] } = usePacientes();
+  const { data: todosPacientes = [] } = usePacientes();
   const { data: psicologos = [] } = usePsicologos();
+  // Oculta pacientes de alta/inactivos al agendar (siguen visibles si ya
+  // estaban seleccionados, p. ej. al editar una cita antigua).
+  const seleccionadoActual = pacienteFijo ?? inicial?.paciente_id;
+  const pacientes = todosPacientes.filter(
+    (p) =>
+      p.id === seleccionadoActual ||
+      (p.estatus !== "alta" && p.estatus !== "inactivo"),
+  );
 
   const {
     register,

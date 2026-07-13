@@ -1,10 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Eye, EyeOff, FileText, Plus, Printer, Search, Trash2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  FileText,
+  Pencil,
+  Plus,
+  Printer,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +28,7 @@ import { useConfiguracion } from "@/hooks/use-configuracion";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { usePlanes } from "@/hooks/use-planes";
 import {
+  useActualizarReporte,
   useCrearReporte,
   useEliminarReporte,
   useReportesProgreso,
@@ -38,6 +48,18 @@ export function ProgresoCliente() {
   const confirmar = useConfirm();
   const [busqueda, setBusqueda] = useState("");
   const [crear, setCrear] = useState(false);
+  const [editar, setEditar] = useState<ReporteListItem | null>(null);
+  const [pacientePreseleccionado, setPacientePreseleccionado] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("paciente");
+    if (id) {
+      setPacientePreseleccionado(id);
+      setCrear(true);
+    }
+  }, []);
 
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -128,7 +150,12 @@ export function ProgresoCliente() {
             >
               {r.compartido ? "Compartido" : "Privado"}
             </span>
-            <Button size="sm" variant="ghost" onClick={() => compartir(r)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={toggle.isPending}
+              onClick={() => compartir(r)}
+            >
               {r.compartido ? (
                 <>
                   <EyeOff className="h-4 w-4" /> Ocultar
@@ -138,6 +165,9 @@ export function ProgresoCliente() {
                   <Eye className="h-4 w-4" /> Compartir
                 </>
               )}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setEditar(r)}>
+              <Pencil className="h-4 w-4" /> Editar
             </Button>
             <Button
               size="sm"
@@ -150,6 +180,7 @@ export function ProgresoCliente() {
               variant="ghost"
               size="icon"
               aria-label="Eliminar"
+              disabled={eliminar.isPending}
               onClick={() => borrar(r.id)}
               className="h-9 w-9 text-luda-gris-light hover:bg-red-50 hover:text-red-500"
             >
@@ -159,17 +190,139 @@ export function ProgresoCliente() {
         ))}
       </div>
 
-      {crear && <ModalNuevoReporte onCerrar={() => setCrear(false)} />}
+      {crear && (
+        <ModalNuevoReporte
+          pacienteInicial={pacientePreseleccionado ?? undefined}
+          onCerrar={() => setCrear(false)}
+        />
+      )}
+      {editar && (
+        <ModalEditarReporte reporte={editar} onCerrar={() => setEditar(null)} />
+      )}
     </div>
   );
 }
 
-function ModalNuevoReporte({ onCerrar }: { onCerrar: () => void }) {
+function ModalEditarReporte({
+  reporte,
+  onCerrar,
+}: {
+  reporte: ReporteListItem;
+  onCerrar: () => void;
+}) {
+  const actualizar = useActualizarReporte(reporte.id);
+  const [titulo, setTitulo] = useState(reporte.titulo);
+  const [inicio, setInicio] = useState(reporte.periodo_inicio?.slice(0, 10) ?? "");
+  const [fin, setFin] = useState(reporte.periodo_fin?.slice(0, 10) ?? "");
+  const [resumen, setResumen] = useState(reporte.resumen ?? "");
+  const [logros, setLogros] = useState(reporte.logros ?? "");
+  const [recomendaciones, setRecomendaciones] = useState(
+    reporte.recomendaciones ?? "",
+  );
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!titulo.trim()) {
+      toast.error("Escribe un título");
+      return;
+    }
+    try {
+      await actualizar.mutateAsync({
+        titulo: titulo.trim(),
+        periodo_inicio: inicio || null,
+        periodo_fin: fin || null,
+        resumen: resumen.trim() || null,
+        logros: logros.trim() || null,
+        recomendaciones: recomendaciones.trim() || null,
+      });
+      toast.success("Reporte actualizado");
+      onCerrar();
+    } catch {
+      toast.error("No se pudo actualizar el reporte");
+    }
+  }
+
+  return (
+    <Modal abierto onCerrar={onCerrar} titulo="Editar reporte de progreso">
+      <form onSubmit={guardar} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-titulo">Título</Label>
+          <Input
+            id="edit-titulo"
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+            required
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-inicio">Periodo desde (opcional)</Label>
+            <Input
+              id="edit-inicio"
+              type="date"
+              value={inicio}
+              onChange={(e) => setInicio(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-fin">Periodo hasta</Label>
+            <Input
+              id="edit-fin"
+              type="date"
+              value={fin}
+              onChange={(e) => setFin(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-resumen">Resumen del periodo</Label>
+          <Textarea
+            id="edit-resumen"
+            value={resumen}
+            onChange={(e) => setResumen(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-logros">Logros destacados (opcional)</Label>
+          <Textarea
+            id="edit-logros"
+            value={logros}
+            onChange={(e) => setLogros(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-reco">Recomendaciones para casa (opcional)</Label>
+          <Textarea
+            id="edit-reco"
+            value={recomendaciones}
+            onChange={(e) => setRecomendaciones(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" variant="ghost" onClick={onCerrar}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={actualizar.isPending}>
+            {actualizar.isPending ? "Guardando…" : "Guardar cambios"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function ModalNuevoReporte({
+  pacienteInicial,
+  onCerrar,
+}: {
+  pacienteInicial?: string;
+  onCerrar: () => void;
+}) {
   const { data: pacientes = [] } = usePacientes();
   const { data: planes = [] } = usePlanes();
   const crear = useCrearReporte();
 
-  const [pacienteId, setPacienteId] = useState("");
+  const [pacienteId, setPacienteId] = useState(pacienteInicial ?? "");
   const [planId, setPlanId] = useState("");
   const [titulo, setTitulo] = useState(
     `Reporte de progreso · ${format(new Date(), "MMMM yyyy", { locale: es })}`,

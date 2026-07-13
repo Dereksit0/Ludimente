@@ -9,6 +9,7 @@ import {
   ArrowUpCircle,
   Clock,
   Download,
+  Pencil,
   Plus,
   Scale,
   Trash2,
@@ -25,11 +26,13 @@ import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  useActualizarGasto,
   useCrearGasto,
   useEliminarGasto,
   useGastos,
   useIngresosCobrados,
   usePorCobrar,
+  type Gasto,
 } from "@/hooks/use-finanzas";
 import {
   CATEGORIA_GASTO_LABEL,
@@ -51,6 +54,7 @@ export function FinanzasCliente() {
   const eliminar = useEliminarGasto();
   const confirmar = useConfirm();
   const [crear, setCrear] = useState(false);
+  const [editar, setEditar] = useState<Gasto | null>(null);
   const [categoria, setCategoria] = useState("");
 
   const ahora = new Date();
@@ -96,8 +100,12 @@ export function FinanzasCliente() {
       peligro: true,
     });
     if (!ok) return;
-    await eliminar.mutateAsync(id);
-    toast.success("Gasto eliminado");
+    try {
+      await eliminar.mutateAsync(id);
+      toast.success("Gasto eliminado");
+    } catch {
+      toast.error("No se pudo eliminar el gasto");
+    }
   }
 
   function exportar() {
@@ -223,6 +231,15 @@ export function FinanzasCliente() {
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Editar gasto"
+              onClick={() => setEditar(g)}
+              className="h-8 w-8 text-luda-gris-light hover:bg-luda-lila-light hover:text-luda-lila-dark"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Eliminar gasto"
               onClick={() => borrar(g.id)}
               className="h-8 w-8 text-luda-gris-light hover:bg-red-50 hover:text-red-500"
@@ -239,7 +256,148 @@ export function FinanzasCliente() {
       </div>
 
       {crear && <ModalNuevoGasto onCerrar={() => setCrear(false)} />}
+      {editar && (
+        <ModalEditarGasto gasto={editar} onCerrar={() => setEditar(null)} />
+      )}
     </div>
+  );
+}
+
+function ModalEditarGasto({
+  gasto,
+  onCerrar,
+}: {
+  gasto: Gasto;
+  onCerrar: () => void;
+}) {
+  const actualizar = useActualizarGasto();
+  const [concepto, setConcepto] = useState(gasto.concepto);
+  const [categoria, setCategoria] = useState(gasto.categoria);
+  const [monto, setMonto] = useState(String(gasto.monto));
+  const [fecha, setFecha] = useState(gasto.fecha.slice(0, 10));
+  const [metodo, setMetodo] = useState(gasto.metodo_pago);
+  const [proveedor, setProveedor] = useState(gasto.proveedor ?? "");
+  const [notas, setNotas] = useState(gasto.notas ?? "");
+
+  async function guardar(e: React.FormEvent) {
+    e.preventDefault();
+    const m = Number(monto);
+    const val = gastoSchema.safeParse({ concepto, monto: monto === "" ? NaN : m });
+    if (!val.success) {
+      toast.error(primerError(val.error));
+      return;
+    }
+    try {
+      await actualizar.mutateAsync({
+        id: gasto.id,
+        cambios: {
+          concepto: concepto.trim(),
+          categoria,
+          monto: m,
+          fecha,
+          metodo_pago: metodo,
+          proveedor: proveedor.trim() || null,
+          notas: notas.trim() || null,
+        },
+      });
+      toast.success("Gasto actualizado");
+      onCerrar();
+    } catch {
+      toast.error("No se pudo actualizar el gasto");
+    }
+  }
+
+  return (
+    <Modal abierto onCerrar={onCerrar} titulo="Editar gasto">
+      <form onSubmit={guardar} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-concepto">Concepto</Label>
+          <Input
+            id="edit-concepto"
+            value={concepto}
+            onChange={(e) => setConcepto(e.target.value)}
+            required
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-categoria">Categoría</Label>
+            <Select
+              id="edit-categoria"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+            >
+              {CATEGORIA_GASTO_OPCIONES.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-monto">Monto</Label>
+            <Input
+              id="edit-monto"
+              type="number"
+              min="0"
+              step="0.01"
+              value={monto}
+              onChange={(e) => setMonto(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-fecha">Fecha</Label>
+            <Input
+              id="edit-fecha"
+              type="date"
+              value={fecha}
+              onChange={(e) => setFecha(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-metodo">Método de pago</Label>
+            <Select
+              id="edit-metodo"
+              value={metodo}
+              onChange={(e) => setMetodo(e.target.value)}
+            >
+              {METODO_PAGO_OPCIONES.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-proveedor">Proveedor (opcional)</Label>
+          <Input
+            id="edit-proveedor"
+            value={proveedor}
+            onChange={(e) => setProveedor(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-notas">Notas (opcional)</Label>
+          <Textarea
+            id="edit-notas"
+            value={notas}
+            onChange={(e) => setNotas(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" variant="ghost" onClick={onCerrar}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={actualizar.isPending}>
+            {actualizar.isPending ? "Guardando…" : "Guardar cambios"}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

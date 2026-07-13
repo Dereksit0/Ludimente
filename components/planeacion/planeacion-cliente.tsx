@@ -408,6 +408,17 @@ function ModalPlaneacion({
           />
         </div>
 
+        <div className="space-y-1.5">
+          <Label htmlFor="notas">Notas (opcional)</Label>
+          <Textarea
+            id="notas"
+            value={f.notas}
+            onChange={(e) => set("notas", e.target.value)}
+            placeholder="Observaciones para quien cubra la sesión…"
+            className="min-h-[60px]"
+          />
+        </div>
+
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onCerrar}>
             Cancelar

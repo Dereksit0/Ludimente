@@ -4,6 +4,8 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
   FileText,
   NotebookPen,
   Wallet,
@@ -19,6 +21,8 @@ const META: Record<TipoEvento, { icon: LucideIcon; clase: string }> = {
   sesion: { icon: NotebookPen, clase: "bg-luda-lila-light text-luda-lila-dark" },
   pago: { icon: Wallet, clase: "bg-luda-rosa-light text-luda-rosa" },
   documento: { icon: FileText, clase: "bg-luda-amarillo-light text-yellow-700" },
+  evaluacion: { icon: ClipboardList, clase: "bg-luda-azul-light text-blue-700" },
+  tamizaje: { icon: ClipboardCheck, clase: "bg-green-100 text-green-700" },
 };
 
 export function TimelineTab({ paciente }: { paciente: PacienteDetalle }) {

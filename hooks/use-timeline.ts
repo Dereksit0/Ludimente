@@ -8,9 +8,19 @@ import {
   ESTATUS_PAGO_LABEL,
   TIPO_CITA_LABEL,
 } from "@/types/app.types";
-import { AREA_TRABAJO_LABEL, TIPO_DOCUMENTO_LABEL } from "@/lib/catalogos";
+import {
+  AREA_TRABAJO_LABEL,
+  ESTATUS_EVALUACION_LABEL,
+  TIPO_DOCUMENTO_LABEL,
+} from "@/lib/catalogos";
 
-export type TipoEvento = "cita" | "sesion" | "pago" | "documento";
+export type TipoEvento =
+  | "cita"
+  | "sesion"
+  | "pago"
+  | "documento"
+  | "evaluacion"
+  | "tamizaje";
 
 export interface EventoTimeline {
   id: string;
@@ -29,26 +39,36 @@ export function useTimelinePaciente(pacienteId: string) {
     enabled: Boolean(pacienteId),
     queryFn: async (): Promise<EventoTimeline[]> => {
       const supabase = createClient();
-      const [citas, sesiones, pagos, documentos] = await Promise.all([
-        supabase
-          .from("citas")
-          .select("id, fecha_inicio, tipo, estatus")
-          .eq("paciente_id", pacienteId),
-        supabase
-          .from("sesiones")
-          .select("id, fecha_sesion, numero_sesion, area_trabajo")
-          .eq("paciente_id", pacienteId)
-          .is("deleted_at", null),
-        // pagos queda vacío para quien no sea admin (RLS).
-        supabase
-          .from("pagos")
-          .select("id, concepto, monto_final, estatus, fecha_pago, created_at")
-          .eq("paciente_id", pacienteId),
-        supabase
-          .from("documentos")
-          .select("id, nombre_display, tipo, created_at")
-          .eq("paciente_id", pacienteId),
-      ]);
+      const [citas, sesiones, pagos, documentos, evaluaciones, tamizajes] =
+        await Promise.all([
+          supabase
+            .from("citas")
+            .select("id, fecha_inicio, tipo, estatus")
+            .eq("paciente_id", pacienteId),
+          supabase
+            .from("sesiones")
+            .select("id, fecha_sesion, numero_sesion, area_trabajo")
+            .eq("paciente_id", pacienteId)
+            .is("deleted_at", null),
+          // pagos queda vacío para quien no sea admin (RLS).
+          supabase
+            .from("pagos")
+            .select("id, concepto, monto_final, estatus, fecha_pago, created_at")
+            .eq("paciente_id", pacienteId),
+          supabase
+            .from("documentos")
+            .select("id, nombre_display, tipo, created_at")
+            .eq("paciente_id", pacienteId),
+          supabase
+            .from("evaluaciones")
+            .select("id, tipo_prueba, nombre_personalizado, fecha_aplicacion, estatus")
+            .eq("paciente_id", pacienteId)
+            .is("deleted_at", null),
+          supabase
+            .from("tamizajes")
+            .select("id, fecha, areas")
+            .eq("paciente_id", pacienteId),
+        ]);
 
       const eventos: EventoTimeline[] = [];
 
@@ -88,6 +108,26 @@ export function useTimelinePaciente(pacienteId: string) {
           fecha: d.created_at,
           titulo: d.nombre_display,
           detalle: TIPO_DOCUMENTO_LABEL[d.tipo] ?? d.tipo,
+        });
+      }
+      for (const e of evaluaciones.data ?? []) {
+        eventos.push({
+          id: `evaluacion-${e.id}`,
+          tipo: "evaluacion",
+          fecha: e.fecha_aplicacion,
+          titulo: e.nombre_personalizado || e.tipo_prueba,
+          detalle: ESTATUS_EVALUACION_LABEL[e.estatus] ?? e.estatus,
+        });
+      }
+      for (const t of tamizajes.data ?? []) {
+        const areas = (t.areas ?? {}) as Record<string, unknown>;
+        const numAreas = Object.keys(areas).length;
+        eventos.push({
+          id: `tamizaje-${t.id}`,
+          tipo: "tamizaje",
+          fecha: t.fecha,
+          titulo: "Tamizaje inicial",
+          detalle: numAreas > 0 ? `${numAreas} área(s) evaluadas` : "Aplicado",
         });
       }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -59,6 +59,14 @@ export function TamizajeCliente() {
   const [crearPara, setCrearPara] = useState<string | null>(null); // paciente_id o ""
   const [abierto, setAbierto] = useState(false);
   const [propuestaDe, setPropuestaDe] = useState<TamizajeItem | null>(null);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("paciente");
+    if (id) {
+      setCrearPara(id);
+      setAbierto(true);
+    }
+  }, []);
 
   // Último tamizaje por paciente (la lista viene ordenada por fecha desc).
   const ultimoPorPaciente = useMemo(() => {
@@ -303,11 +311,17 @@ function ModalPropuesta({
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      // Un admin nunca queda como "psicólogo asignado" del plan (mismo
+      // criterio que sugerencia-plan-actions.ts).
+      const psicologoId =
+        user?.app_metadata?.role === "psicologo"
+          ? user.id
+          : (tamizaje.evaluador_id ?? null);
       const { data: plan, error } = await supabase
         .from("planes_intervencion")
         .insert({
           paciente_id: tamizaje.paciente_id,
-          psicologo_id: user?.id ?? tamizaje.evaluador_id ?? null,
+          psicologo_id: psicologoId,
           titulo: `Plan de intervención — ${tamizaje.paciente_nombre}`,
           diagnostico_base: "Generado a partir del tamizaje inicial",
           descripcion: `Plan sugerido por el sistema según los resultados del tamizaje (${propuesta.sesiones} sesiones, ${propuesta.frecuencia}/semana).`,

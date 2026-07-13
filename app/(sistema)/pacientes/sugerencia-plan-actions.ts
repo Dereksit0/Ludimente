@@ -87,3 +87,67 @@ export async function sugerirPlanIntervencion(
     };
   }
 }
+
+export type ResultadoCrearPlan =
+  | { ok: true; planId: string }
+  | { ok: false; error: string };
+
+/** Persiste la propuesta de la IA como el plan de intervención real del paciente. */
+export async function crearPlanDesdeSugerencia(
+  pacienteId: string,
+  sugerencia: SugerenciaPlan,
+): Promise<ResultadoCrearPlan> {
+  try {
+    await requiereClinico();
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("No autorizado");
+
+    const role = user.app_metadata?.role;
+    const psicologoId = role === "psicologo" ? user.id : null;
+
+    const fechaInicio = new Date().toISOString().slice(0, 10);
+    const fechaFin = new Date();
+    fechaFin.setMonth(fechaFin.getMonth() + sugerencia.duracionEstimadaMeses);
+
+    const { data: plan, error: errorPlan } = await supabase
+      .from("planes_intervencion")
+      .insert({
+        paciente_id: pacienteId,
+        psicologo_id: psicologoId,
+        titulo: "Plan de intervención (propuesta IA revisada)",
+        descripcion: sugerencia.justificacion,
+        fecha_inicio: fechaInicio,
+        fecha_fin_estimada: fechaFin.toISOString().slice(0, 10),
+        estatus: "activo",
+        created_by: user.id,
+      })
+      .select("id")
+      .single();
+    if (errorPlan) throw errorPlan;
+
+    const { error: errorObjetivos } = await supabase
+      .from("objetivos_intervencion")
+      .insert(
+        sugerencia.objetivos.map((o, i) => ({
+          plan_id: plan.id,
+          descripcion: o.descripcion,
+          area: o.area,
+          prioridad: o.prioridad,
+          orden: i,
+        })),
+      );
+    if (errorObjetivos) throw errorObjetivos;
+
+    return { ok: true, planId: plan.id };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error ? err.message : "No se pudo crear el plan.",
+    };
+  }
+}

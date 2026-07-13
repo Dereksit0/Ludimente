@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createClient } from "@/lib/supabase/client";
-import type { EstatusPago, Tables } from "@/types/database.types";
+import type { EstatusPago, MetodoPago, Tables } from "@/types/database.types";
 
 export type PagoCobranza = Tables<"pagos"> & {
   paciente_nombre: string;
@@ -50,9 +50,12 @@ export function useMarcarPago() {
     mutationFn: async ({
       id,
       estatus,
+      metodoPago,
     }: {
       id: string;
       estatus: EstatusPago;
+      /** Método real con el que se cobró (solo aplica al marcar "pagado"). */
+      metodoPago?: MetodoPago;
     }): Promise<void> => {
       const supabase = createClient();
       const { error } = await supabase
@@ -60,6 +63,9 @@ export function useMarcarPago() {
         .update({
           estatus,
           fecha_pago: estatus === "pagado" ? new Date().toISOString() : null,
+          ...(estatus === "pagado" && metodoPago
+            ? { metodo_pago: metodoPago }
+            : {}),
         })
         .eq("id", id);
       if (error) throw error;

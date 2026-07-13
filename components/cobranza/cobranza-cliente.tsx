@@ -10,19 +10,24 @@ import {
   Clock,
   Download,
   Receipt,
+  RotateCcw,
   Search,
   Wallet,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { LudaStat } from "@/components/ui/luda-stat";
+import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { useConfiguracion } from "@/hooks/use-configuracion";
 import { useCobranza, useMarcarPago, type PagoCobranza } from "@/hooks/use-cobranza";
-import { ESTATUS_PAGO_OPCIONES } from "@/lib/catalogos";
+import { ESTATUS_PAGO_OPCIONES, METODO_PAGO_OPCIONES } from "@/lib/catalogos";
 import { descargarCSV } from "@/lib/csv";
 import {
   DIAS_LIMITE_PAGO,
@@ -31,7 +36,7 @@ import {
 } from "@/lib/pagos-limite";
 import { imprimirRecibo } from "@/lib/print-recibo";
 import { ESTATUS_PAGO_CLASES, ESTATUS_PAGO_LABEL } from "@/types/app.types";
-import type { EstatusPago } from "@/types/database.types";
+import type { EstatusPago, MetodoPago } from "@/types/database.types";
 
 const mx = (n: number) =>
   `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
@@ -45,8 +50,10 @@ export function CobranzaCliente() {
   const { data: pagos = [], isLoading } = useCobranza();
   const { data: config } = useConfiguracion();
   const marcar = useMarcarPago();
+  const confirmar = useConfirm();
   const [filtro, setFiltro] = useState<EstatusPago | "">("");
   const [busqueda, setBusqueda] = useState("");
+  const [marcarPara, setMarcarPara] = useState<PagoCobranza | null>(null);
 
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -90,9 +97,16 @@ export function CobranzaCliente() {
     return { ingresosMes, pendiente, totalPagado, vencido };
   }, [pagos]);
 
-  async function marcarPagado(id: string) {
-    await marcar.mutateAsync({ id, estatus: "pagado" });
-    toast.success("Pago marcado como pagado");
+  async function cambiarEstatus(id: string, estatus: EstatusPago, titulo: string) {
+    const ok = await confirmar({
+      titulo,
+      mensaje: `¿Confirmas este cambio de estatus del pago?`,
+      confirmar: "Confirmar",
+      peligro: estatus === "cancelado" || estatus === "reembolsado",
+    });
+    if (!ok) return;
+    await marcar.mutateAsync({ id, estatus });
+    toast.success("Pago actualizado");
   }
 
   function exportar() {
@@ -218,17 +232,39 @@ export function CobranzaCliente() {
                 {ESTATUS_PAGO_LABEL[p.estatus]}
               </span>
               {p.estatus === "pendiente" && (
-                <Button size="sm" variant="outline" onClick={() => marcarPagado(p.id)}>
+                <Button size="sm" variant="outline" onClick={() => setMarcarPara(p)}>
                   <CheckCircle2 className="h-4 w-4" /> Marcar pagado
                 </Button>
               )}
               {p.estatus === "pagado" && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => imprimirRecibo(p, p.paciente_nombre, config)}
+                  >
+                    <Receipt className="h-4 w-4" /> Recibo
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-luda-gris-light hover:text-red-500"
+                    onClick={() =>
+                      cambiarEstatus(p.id, "reembolsado", "Marcar como reembolsado")
+                    }
+                  >
+                    <RotateCcw className="h-4 w-4" /> Reembolsar
+                  </Button>
+                </>
+              )}
+              {(p.estatus === "pendiente" || p.estatus === "pagado") && (
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => imprimirRecibo(p, p.paciente_nombre, config)}
+                  className="text-luda-gris-light hover:text-red-500"
+                  onClick={() => cambiarEstatus(p.id, "cancelado", "Cancelar pago")}
                 >
-                  <Receipt className="h-4 w-4" /> Recibo
+                  <XCircle className="h-4 w-4" /> Cancelar
                 </Button>
               )}
             </LudaCard>
@@ -240,6 +276,74 @@ export function CobranzaCliente() {
           </LudaCard>
         )}
       </div>
+
+      {marcarPara && (
+        <ModalMarcarPagado
+          pago={marcarPara}
+          marcando={marcar.isPending}
+          onCerrar={() => setMarcarPara(null)}
+          onConfirmar={async (metodoPago) => {
+            await marcar.mutateAsync({
+              id: marcarPara.id,
+              estatus: "pagado",
+              metodoPago,
+            });
+            toast.success("Pago marcado como pagado");
+            setMarcarPara(null);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function ModalMarcarPagado({
+  pago,
+  marcando,
+  onCerrar,
+  onConfirmar,
+}: {
+  pago: PagoCobranza;
+  marcando: boolean;
+  onCerrar: () => void;
+  onConfirmar: (metodoPago: MetodoPago) => Promise<void>;
+}) {
+  const [metodo, setMetodo] = useState<MetodoPago>(pago.metodo_pago as MetodoPago);
+
+  return (
+    <Modal abierto onCerrar={onCerrar} titulo="Marcar pago como pagado">
+      <div className="space-y-4">
+        <p className="text-sm text-luda-gris-light">
+          {pago.paciente_nombre} · {pago.concepto} ·{" "}
+          {mx(Number(pago.monto_final ?? 0))}
+        </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="metodo-real">¿Con qué método se cobró?</Label>
+          <Select
+            id="metodo-real"
+            value={metodo}
+            onChange={(e) => setMetodo(e.target.value as MetodoPago)}
+          >
+            {METODO_PAGO_OPCIONES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button type="button" variant="ghost" onClick={onCerrar}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            disabled={marcando}
+            onClick={() => onConfirmar(metodo)}
+          >
+            {marcando ? "Guardando…" : "Confirmar pago"}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

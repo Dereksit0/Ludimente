@@ -25,7 +25,7 @@ export function PlanTab({ paciente }: { paciente: PacienteDetalle }) {
           Planes de intervención del paciente
         </p>
         <Button asChild size="sm" variant="outline">
-          <Link href="/planes">
+          <Link href={`/planes?paciente=${paciente.id}`}>
             <Plus className="h-4 w-4" /> Nuevo plan
           </Link>
         </Button>

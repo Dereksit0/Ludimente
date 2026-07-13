@@ -78,11 +78,13 @@ export function useFirmarConsentimiento() {
       firma_data,
       firmante_nombre,
       firmante_parentesco,
+      decision,
     }: {
       id: string;
       firma_data: string;
       firmante_nombre: string;
       firmante_parentesco: string;
+      decision?: "acepta" | "no_acepta" | null;
     }): Promise<void> => {
       const supabase = createClient();
       const { error } = await supabase
@@ -93,6 +95,7 @@ export function useFirmarConsentimiento() {
           firmante_nombre,
           firmante_parentesco,
           firmado_at: new Date().toISOString(),
+          decision: decision ?? null,
         })
         .eq("id", id);
       if (error) throw error;

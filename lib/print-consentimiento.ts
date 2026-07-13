@@ -19,6 +19,14 @@ export function imprimirConsentimiento(
       ? `<img src="${c.firma_data}" alt="Firma" style="max-height:90px"/>`
       : `<div style="height:90px;border-bottom:1px solid #999"></div>`;
 
+  const decisionHtml = c.requiere_decision
+    ? `<p class="lm-texto" style="margin-top:14px;font-weight:600">Decisión marcada: ${
+        c.decision
+          ? esc(c.decision === "acepta" ? "SÍ acepto" : "NO acepto")
+          : "(sin marcar)"
+      }</p>`
+    : "";
+
   const body = `
   <p class="lm-doc-title">${esc(c.titulo)}</p>
   <p class="lm-doc-sub">${esc(TIPO_CONSENTIMIENTO_LABEL[c.tipo] ?? c.tipo)} · ${esc(
@@ -28,6 +36,7 @@ export function imprimirConsentimiento(
   <p class="lm-texto" style="white-space:pre-line;line-height:1.7;margin-top:14px">${esc(
     c.contenido ?? "",
   )}</p>
+  ${decisionHtml}
 
   <div class="lm-firma" style="margin-top:60px">
     ${firmaHtml}

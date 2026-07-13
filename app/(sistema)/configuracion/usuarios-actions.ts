@@ -12,6 +12,29 @@ async function requiereAdmin() {
   if (!user || user.app_metadata?.role !== "admin") {
     throw new Error("No autorizado");
   }
+  return user;
+}
+
+/**
+ * Las mutaciones de usuarios corren con `service_role`, así que dentro de
+ * `fn_audit()` `auth.uid()` es null y el registro quedaría atribuido a
+ * "Sistema". Aquí lo dejamos explícito con el admin que ejecutó la acción.
+ */
+async function registrarAuditoria(
+  actorId: string,
+  registroId: string,
+  antes: unknown,
+  despues: unknown,
+) {
+  const db = createAdminClient();
+  await db.from("audit_log").insert({
+    tabla: "profiles",
+    registro_id: registroId,
+    accion: "UPDATE",
+    usuario_id: actorId,
+    datos_antes: antes as never,
+    datos_despues: despues as never,
+  });
 }
 
 export interface UsuarioEquipo {
@@ -78,8 +101,11 @@ export async function crearUsuario(input: {
 export async function cambiarActivoUsuario(
   id: string,
   activo: boolean,
-): Promise<{ ok: boolean }> {
-  await requiereAdmin();
+): Promise<{ ok: boolean; error?: string }> {
+  const actor = await requiereAdmin();
+  if (actor.id === id) {
+    return { ok: false, error: "No puedes activar o desactivar tu propia cuenta." };
+  }
   const db = createAdminClient();
   const { data } = await db.auth.admin.getUserById(id);
   const meta = data.user?.app_metadata ?? {};
@@ -90,20 +116,26 @@ export async function cambiarActivoUsuario(
     ban_duration: activo ? "none" : "876000h",
   });
   await db.from("profiles").update({ activo }).eq("id", id);
+  await registrarAuditoria(actor.id, id, { activo: !activo }, { activo });
   return { ok: true };
 }
 
 export async function cambiarRolUsuario(
   id: string,
   role: Rol,
-): Promise<{ ok: boolean }> {
-  await requiereAdmin();
+): Promise<{ ok: boolean; error?: string }> {
+  const actor = await requiereAdmin();
+  if (actor.id === id) {
+    return { ok: false, error: "No puedes cambiar tu propio rol." };
+  }
   const db = createAdminClient();
   const { data } = await db.auth.admin.getUserById(id);
   const meta = data.user?.app_metadata ?? {};
+  const rolAnterior = meta.role ?? null;
   await db.auth.admin.updateUserById(id, {
     app_metadata: { ...meta, role },
   });
   await db.from("profiles").update({ role }).eq("id", id);
+  await registrarAuditoria(actor.id, id, { role: rolAnterior }, { role });
   return { ok: true };
 }

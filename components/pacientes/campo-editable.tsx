@@ -15,6 +15,8 @@ interface CampoEditableProps {
   tipo?: "text" | "textarea" | "date";
   placeholder?: string;
   className?: string;
+  /** Cuando es true, se muestra el valor sin la opción de editar (sin permiso). */
+  soloLectura?: boolean;
 }
 
 /** Campo con edición in-place: click en el lápiz → editar → guardar. */
@@ -25,10 +27,29 @@ export function CampoEditable({
   tipo = "text",
   placeholder = "Sin información",
   className,
+  soloLectura = false,
 }: CampoEditableProps) {
   const [editando, setEditando] = useState(false);
   const [local, setLocal] = useState(valor ?? "");
   const [guardando, setGuardando] = useState(false);
+
+  if (soloLectura) {
+    return (
+      <div className={cn(className)}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-luda-gris-light">
+          {label}
+        </p>
+        <p
+          className={cn(
+            "mt-0.5 whitespace-pre-wrap text-sm",
+            valor ? "text-luda-gris" : "italic text-luda-gris-light",
+          )}
+        >
+          {valor || placeholder}
+        </p>
+      </div>
+    );
+  }
 
   async function guardar() {
     setGuardando(true);

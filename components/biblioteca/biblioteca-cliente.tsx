@@ -56,7 +56,7 @@ export function BibliotecaCliente() {
       );
   }, [recursos, busqueda, categoria]);
 
-  async function borrar(id: string) {
+  async function borrar(r: Recurso) {
     const ok = await confirmar({
       titulo: "Eliminar recurso",
       mensaje: "¿Eliminar este recurso? Esta acción no se puede deshacer.",
@@ -64,7 +64,7 @@ export function BibliotecaCliente() {
       peligro: true,
     });
     if (!ok) return;
-    await eliminar.mutateAsync(id);
+    await eliminar.mutateAsync({ id: r.id, url: r.url });
     toast.success("Recurso eliminado");
   }
 
@@ -136,7 +136,7 @@ export function BibliotecaCliente() {
                 variant="ghost"
                 size="icon"
                 aria-label="Eliminar"
-                onClick={() => borrar(r.id)}
+                onClick={() => borrar(r)}
                 className="h-8 w-8 shrink-0 text-luda-gris-light hover:bg-red-50 hover:text-red-500"
               >
                 <Trash2 className="h-4 w-4" />
@@ -230,6 +230,10 @@ function ModalRecurso({
       toast.error(primerError(val.error));
       return;
     }
+    if (!url.trim() && !archivo && !recurso?.url) {
+      toast.error("Agrega un enlace o sube un archivo para este recurso.");
+      return;
+    }
     let urlFinal = url.trim() || null;
     if (archivo) {
       try {
@@ -258,7 +262,11 @@ function ModalRecurso({
     };
     try {
       if (recurso) {
-        await actualizar.mutateAsync({ id: recurso.id, cambios: datos });
+        await actualizar.mutateAsync({
+          id: recurso.id,
+          cambios: datos,
+          urlAnterior: recurso.url,
+        });
         toast.success("Recurso actualizado");
       } else {
         await crear.mutateAsync(datos);

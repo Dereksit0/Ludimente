@@ -4,17 +4,22 @@ import { useEffect, useState } from "react";
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, Pencil, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuditoria } from "@/hooks/use-auditoria";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
+  useActualizarPaquete,
   useCatalogoPaquetes,
   useCrearPaquete,
   useEliminarPaquete,
 } from "@/hooks/use-paquetes";
+import { useGuardarPrecioCita, usePreciosCitas } from "@/hooks/use-precios-citas";
 import { createClient } from "@/lib/supabase/client";
 import { descargarCSV } from "@/lib/csv";
+import { TIPO_CITA_OPCIONES } from "@/lib/catalogos";
+import type { TipoCita } from "@/types/database.types";
 
 import {
   cambiarActivoUsuario,
@@ -111,10 +116,15 @@ function ConsultorioTab() {
           <Campo label="Duración sesión (min)">
             <Input type="number" name="duracion_sesion_mins" defaultValue={config.duracion_sesion_mins ?? 50} />
           </Campo>
-          <Campo label="Precio sesión">
+          <Campo label="Precio general (respaldo)">
             <Input type="number" step="0.01" name="precio_sesion_default" defaultValue={config.precio_sesion_default ?? 0} />
           </Campo>
         </div>
+        <p className="text-xs text-luda-gris-light">
+          Cada tipo de cita tiene su propia tarifa en la pestaña{" "}
+          <span className="font-semibold">Tarifas</span>. Este precio general solo
+          se usa como respaldo si un tipo no tiene tarifa configurada.
+        </p>
       </LudaCard>
 
       <Button type="submit" disabled={guardar.isPending}>
@@ -134,6 +144,8 @@ function UsuariosTab() {
   const [usuarios, setUsuarios] = useState<UsuarioEquipo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [creando, setCreando] = useState(false);
+  const [propioId, setPropioId] = useState<string | null>(null);
+  const confirmar = useConfirm();
 
   async function refrescar() {
     setUsuarios(await listarUsuarios());
@@ -141,6 +153,9 @@ function UsuariosTab() {
   }
   useEffect(() => {
     refrescar();
+    createClient()
+      .auth.getUser()
+      .then(({ data }) => setPropioId(data.user?.id ?? null));
   }, []);
 
   async function onCrear(e: React.FormEvent<HTMLFormElement>) {
@@ -166,13 +181,36 @@ function UsuariosTab() {
   }
 
   async function toggleActivo(u: UsuarioEquipo) {
-    await cambiarActivoUsuario(u.id, !u.activo);
+    const ok = await confirmar({
+      titulo: u.activo ? "Desactivar usuario" : "Activar usuario",
+      mensaje: u.activo
+        ? `${u.full_name} perderá acceso al sistema de inmediato.`
+        : `${u.full_name} podrá volver a iniciar sesión.`,
+      confirmar: u.activo ? "Desactivar" : "Activar",
+      peligro: u.activo,
+    });
+    if (!ok) return;
+    const res = await cambiarActivoUsuario(u.id, !u.activo);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
     await refrescar();
     toast.success(u.activo ? "Usuario desactivado" : "Usuario activado");
   }
 
   async function cambiarRol(u: UsuarioEquipo, role: Rol) {
-    await cambiarRolUsuario(u.id, role);
+    const ok = await confirmar({
+      titulo: "Cambiar rol",
+      mensaje: `${u.full_name} pasará de ${ROL_LABEL[u.role]} a ${ROL_LABEL[role]}.`,
+      confirmar: "Cambiar rol",
+    });
+    if (!ok) return;
+    const res = await cambiarRolUsuario(u.id, role);
+    if (res.error) {
+      toast.error(res.error);
+      return;
+    }
     await refrescar();
     toast.success("Rol actualizado");
   }
@@ -231,9 +269,15 @@ function UsuariosTab() {
               {u.especialidad && (
                 <p className="text-xs text-luda-gris-light">{u.especialidad}</p>
               )}
+              {u.id === propioId && (
+                <p className="text-xs text-luda-gris-light">
+                  Esta es tu cuenta — no puedes cambiar tu propio rol ni desactivarte.
+                </p>
+              )}
             </div>
             <Select
               value={u.role}
+              disabled={u.id === propioId}
               onChange={(e) => cambiarRol(u, e.target.value as Rol)}
               className="h-9 w-auto text-xs"
             >
@@ -250,7 +294,12 @@ function UsuariosTab() {
             >
               {u.activo ? "Activo" : "Inactivo"}
             </span>
-            <Button size="sm" variant="outline" onClick={() => toggleActivo(u)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={u.id === propioId}
+              onClick={() => toggleActivo(u)}
+            >
               {u.activo ? "Desactivar" : "Activar"}
             </Button>
           </LudaCard>
@@ -267,6 +316,23 @@ const TABLA_LABEL: Record<string, string> = {
   pagos: "Pagos",
   evaluaciones: "Evaluaciones",
   documentos: "Documentos",
+  profiles: "Usuarios del equipo",
+  paquetes: "Paquetes (catálogo)",
+  paquetes_paciente: "Paquetes asignados",
+  abonos: "Abonos",
+  configuracion: "Configuración",
+  precios_citas: "Tarifas por tipo de cita",
+  planes_intervencion: "Planes de intervención",
+  objetivos_intervencion: "Objetivos de intervención",
+  objetivo_seguimientos: "Avances de objetivos",
+  reportes_progreso: "Reportes de progreso",
+  consentimientos: "Consentimientos",
+  gastos: "Gastos",
+  inventario_items: "Inventario",
+  recursos: "Biblioteca de recursos",
+  planeaciones: "Planeación semanal",
+  tamizajes: "Tamizaje",
+  formatos_llenados: "Formatos",
 };
 const ACCION_LABEL: Record<string, string> = {
   INSERT: "Creó",
@@ -280,6 +346,34 @@ const ACCION_CLASE: Record<string, string> = {
   DELETE: "bg-red-50 text-red-600",
   VIEW: "bg-gray-50 text-gray-600",
 };
+
+const CAMPOS_IGNORADOS = new Set(["updated_at", "created_at"]);
+
+function camposCambiados(
+  antes: Record<string, unknown> | null,
+  despues: Record<string, unknown> | null,
+) {
+  const llaves = new Set([
+    ...Object.keys(antes ?? {}),
+    ...Object.keys(despues ?? {}),
+  ]);
+  const cambios: { campo: string; antes: unknown; despues: unknown }[] = [];
+  for (const llave of llaves) {
+    if (CAMPOS_IGNORADOS.has(llave)) continue;
+    const a = antes?.[llave];
+    const d = despues?.[llave];
+    if (JSON.stringify(a) !== JSON.stringify(d)) {
+      cambios.push({ campo: llave, antes: a, despues: d });
+    }
+  }
+  return cambios;
+}
+
+function valorCorto(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  const s = typeof v === "string" ? v : JSON.stringify(v);
+  return s.length > 60 ? `${s.slice(0, 60)}…` : s;
+}
 
 function AuditoriaTab() {
   const [tabla, setTabla] = useState("");
@@ -315,28 +409,77 @@ function AuditoriaTab() {
       )}
 
       <div className="space-y-2">
-        {eventos.map((ev) => (
-          <LudaCard key={ev.id} className="flex flex-wrap items-center gap-3 p-3">
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                ACCION_CLASE[ev.accion] ?? "bg-gray-50 text-gray-600"
-              }`}
-            >
-              {ACCION_LABEL[ev.accion] ?? ev.accion}
-            </span>
-            <span className="text-sm font-semibold text-luda-gris">
-              {TABLA_LABEL[ev.tabla] ?? ev.tabla}
-            </span>
-            <span className="text-sm text-luda-gris-light">
-              por {ev.usuario_nombre}
-            </span>
-            <span className="ml-auto text-xs text-luda-gris-light">
-              {format(new Date(ev.created_at), "d 'de' MMM yyyy, HH:mm", {
-                locale: es,
-              })}
-            </span>
-          </LudaCard>
-        ))}
+        {eventos.map((ev) => {
+          const cambios =
+            ev.accion === "UPDATE"
+              ? camposCambiados(ev.datos_antes, ev.datos_despues)
+              : [];
+          return (
+            <LudaCard key={ev.id} className="p-3">
+              <details>
+                <summary className="flex flex-wrap items-center gap-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      ACCION_CLASE[ev.accion] ?? "bg-gray-50 text-gray-600"
+                    }`}
+                  >
+                    {ACCION_LABEL[ev.accion] ?? ev.accion}
+                  </span>
+                  <span className="text-sm font-semibold text-luda-gris">
+                    {TABLA_LABEL[ev.tabla] ?? ev.tabla}
+                  </span>
+                  <span className="text-sm text-luda-gris-light">
+                    por {ev.usuario_nombre}
+                  </span>
+                  {cambios.length > 0 && (
+                    <span className="text-xs text-luda-lila-dark">
+                      {cambios.length} campo(s) cambiado(s)
+                    </span>
+                  )}
+                  <span className="ml-auto text-xs text-luda-gris-light">
+                    {format(new Date(ev.created_at), "d 'de' MMM yyyy, HH:mm", {
+                      locale: es,
+                    })}
+                  </span>
+                </summary>
+
+                {ev.accion === "UPDATE" && (
+                  <div className="mt-3 space-y-1.5 border-t border-luda-lila/10 pt-3">
+                    {cambios.length === 0 ? (
+                      <p className="text-xs text-luda-gris-light">
+                        Sin cambios visibles en los datos.
+                      </p>
+                    ) : (
+                      cambios.map((c) => (
+                        <div key={c.campo} className="text-xs text-luda-gris">
+                          <span className="font-semibold">{c.campo}: </span>
+                          <span className="text-red-600 line-through">
+                            {valorCorto(c.antes)}
+                          </span>{" "}
+                          → <span className="text-green-700">{valorCorto(c.despues)}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+                {ev.accion === "INSERT" && ev.datos_despues && (
+                  <div className="mt-3 border-t border-luda-lila/10 pt-3">
+                    <p className="text-xs text-luda-gris-light">
+                      Registro creado con {Object.keys(ev.datos_despues).length} campos.
+                    </p>
+                  </div>
+                )}
+                {ev.accion === "DELETE" && ev.datos_antes && (
+                  <div className="mt-3 border-t border-luda-lila/10 pt-3">
+                    <p className="text-xs text-luda-gris-light">
+                      Registro eliminado (id {ev.registro_id}).
+                    </p>
+                  </div>
+                )}
+              </details>
+            </LudaCard>
+          );
+        })}
       </div>
     </div>
   );
@@ -349,6 +492,8 @@ function PaquetesCatalogoTab() {
   const { data: paquetes = [], isLoading } = useCatalogoPaquetes(false);
   const crear = useCrearPaquete();
   const eliminar = useEliminarPaquete();
+  const actualizar = useActualizarPaquete();
+  const [editando, setEditando] = useState<string | null>(null);
 
   async function onCrear(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -397,34 +542,181 @@ function PaquetesCatalogoTab() {
 
       {isLoading && <p className="text-sm text-luda-gris-light">Cargando…</p>}
       <div className="space-y-2">
-        {paquetes.map((p) => (
-          <LudaCard key={p.id} className="flex flex-wrap items-center gap-3 p-4">
-            <div className="flex-1">
-              <p className="text-sm font-bold text-luda-gris">
-                {p.nombre}{" "}
-                {!p.activo && (
-                  <span className="text-xs font-normal text-luda-gris-light">
-                    (inactivo)
-                  </span>
-                )}
-              </p>
-              <p className="text-xs text-luda-gris-light">
-                {p.num_sesiones} sesiones · {mxn(Number(p.precio))}
-              </p>
-            </div>
-            {p.activo && (
+        {paquetes.map((p) =>
+          editando === p.id ? (
+            <LudaCard key={p.id} className="p-4">
+              <form
+                className="grid grid-cols-1 gap-3 sm:grid-cols-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const fd = new FormData(e.currentTarget);
+                  try {
+                    await actualizar.mutateAsync({
+                      id: p.id,
+                      nombre: String(fd.get("nombre") ?? p.nombre),
+                      num_sesiones: Number(fd.get("num_sesiones") ?? p.num_sesiones),
+                      precio: Number(fd.get("precio") ?? p.precio),
+                    });
+                    toast.success("Paquete actualizado");
+                    setEditando(null);
+                  } catch {
+                    toast.error("No se pudo actualizar el paquete");
+                  }
+                }}
+              >
+                <Campo label="Nombre" className="sm:col-span-2">
+                  <Input name="nombre" defaultValue={p.nombre} required />
+                </Campo>
+                <Campo label="N° sesiones">
+                  <Input
+                    name="num_sesiones"
+                    type="number"
+                    min={1}
+                    defaultValue={p.num_sesiones}
+                    required
+                  />
+                </Campo>
+                <Campo label="Precio">
+                  <Input
+                    name="precio"
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    defaultValue={p.precio}
+                    required
+                  />
+                </Campo>
+                <div className="flex items-end gap-2 sm:col-span-4">
+                  <Button type="submit" size="sm" disabled={actualizar.isPending}>
+                    {actualizar.isPending ? "Guardando…" : "Guardar"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setEditando(null)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </LudaCard>
+          ) : (
+            <LudaCard key={p.id} className="flex flex-wrap items-center gap-3 p-4">
+              <div className="flex-1">
+                <p className="text-sm font-bold text-luda-gris">
+                  {p.nombre}{" "}
+                  {!p.activo && (
+                    <span className="text-xs font-normal text-luda-gris-light">
+                      (inactivo)
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-luda-gris-light">
+                  {p.num_sesiones} sesiones · {mxn(Number(p.precio))}
+                </p>
+              </div>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => eliminar.mutate(p.id)}
+                onClick={() => setEditando(p.id)}
               >
-                Desactivar
+                <Pencil className="h-4 w-4" /> Editar precio
               </Button>
-            )}
+              {p.activo && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => eliminar.mutate(p.id)}
+                >
+                  Desactivar
+                </Button>
+              )}
+            </LudaCard>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TarifasCitasTab() {
+  const { data: precios = [], isLoading } = usePreciosCitas();
+  const guardar = useGuardarPrecioCita();
+  const [valores, setValores] = useState<Record<string, number>>({});
+
+  const precioDe = (tipo: string) => {
+    if (valores[tipo] !== undefined) return valores[tipo];
+    const encontrado = precios.find((p) => p.tipo === tipo);
+    return encontrado ? Number(encontrado.precio) : 0;
+  };
+
+  async function guardarTodo(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await Promise.all(
+        TIPO_CITA_OPCIONES.map((t) =>
+          guardar.mutateAsync({
+            tipo: t.value as TipoCita,
+            precio: precioDe(t.value),
+          }),
+        ),
+      );
+      toast.success("Tarifas actualizadas");
+      setValores({});
+    } catch {
+      toast.error("No se pudieron guardar todas las tarifas");
+    }
+  }
+
+  return (
+    <form onSubmit={guardarTodo} className="space-y-4">
+      <LudaCard className="space-y-1 p-5">
+        <h3 className="font-bold text-luda-gris">Tarifa por tipo de cita</h3>
+        <p className="text-sm text-luda-gris-light">
+          Pon en $0 los tipos que no se cobran (por ejemplo, las entrevistas).
+        </p>
+      </LudaCard>
+
+      {isLoading && <p className="text-sm text-luda-gris-light">Cargando…</p>}
+
+      <div className="space-y-2">
+        {TIPO_CITA_OPCIONES.map((t) => (
+          <LudaCard
+            key={t.value}
+            className="flex flex-wrap items-center justify-between gap-3 p-3"
+          >
+            <span className="text-sm font-semibold text-luda-gris">{t.label}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm text-luda-gris-light">$</span>
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                className="h-9 w-28"
+                value={precioDe(t.value)}
+                onChange={(e) =>
+                  setValores((prev) => ({
+                    ...prev,
+                    [t.value]: Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
           </LudaCard>
         ))}
       </div>
-    </div>
+
+      <Button type="submit" disabled={guardar.isPending}>
+        {guardar.isPending ? (
+          <>
+            <Loader2 className="animate-spin" /> Guardando…
+          </>
+        ) : (
+          "Guardar tarifas"
+        )}
+      </Button>
+    </form>
   );
 }
 
@@ -524,6 +816,7 @@ export function ConfiguracionCliente() {
       <Tabs defaultValue="consultorio">
         <TabsList>
           <TabsTrigger value="consultorio">Consultorio</TabsTrigger>
+          <TabsTrigger value="tarifas">Tarifas</TabsTrigger>
           <TabsTrigger value="usuarios">Usuarios</TabsTrigger>
           <TabsTrigger value="paquetes">Paquetes</TabsTrigger>
           <TabsTrigger value="auditoria">Auditoría</TabsTrigger>
@@ -531,6 +824,9 @@ export function ConfiguracionCliente() {
         </TabsList>
         <TabsContent value="consultorio">
           <ConsultorioTab />
+        </TabsContent>
+        <TabsContent value="tarifas">
+          <TarifasCitasTab />
         </TabsContent>
         <TabsContent value="usuarios">
           <UsuariosTab />

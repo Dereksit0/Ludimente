@@ -120,6 +120,96 @@ const ENTREVISTA_INICIAL: Formato = {
   ],
 };
 
+/** Encabezado de datos para el formato de adultos (sin escuela/tutores). */
+const DATOS_PACIENTE_ADULTO: SeccionFormato = {
+  titulo: "Datos del paciente",
+  campos: [
+    { tipo: "texto", label: "Nombre completo", ancho: "completo" },
+    { tipo: "texto", label: "Fecha de nacimiento" },
+    { tipo: "texto", label: "Edad" },
+    { tipo: "texto", label: "Sexo" },
+    { tipo: "texto", label: "Estado civil" },
+    { tipo: "texto", label: "Ocupación" },
+    { tipo: "texto", label: "Escolaridad" },
+    { tipo: "texto", label: "Teléfono de contacto" },
+    { tipo: "texto", label: "Fecha de aplicación" },
+    { tipo: "texto", label: "Aplicador(a)" },
+  ],
+};
+
+// ── 1b. Entrevista para adultos (anamnesis) ──
+const ENTREVISTA_ADULTOS: Formato = {
+  id: "entrevista-adultos",
+  titulo: "Entrevista inicial para adultos",
+  categoria: "Entrevista",
+  descripcion:
+    "Historia clínica y psicológica que se llena en la primera cita con un paciente adulto.",
+  secciones: [
+    DATOS_PACIENTE_ADULTO,
+    {
+      titulo: "Motivo de consulta",
+      campos: [
+        { tipo: "lineas", label: "¿Qué lo trae a consulta? ¿Desde cuándo?", n: 4 },
+      ],
+    },
+    {
+      titulo: "Historia personal y familiar",
+      campos: [
+        { tipo: "texto", label: "Con quién vive" },
+        { tipo: "texto", label: "Estado civil / pareja" },
+        { tipo: "texto", label: "Hijos (número y edades)" },
+        { tipo: "lineas", label: "Dinámica familiar relevante", n: 3 },
+      ],
+    },
+    {
+      titulo: "Historia médica y psiquiátrica",
+      campos: [
+        { tipo: "texto", label: "Enfermedades importantes" },
+        { tipo: "texto", label: "Hospitalizaciones / cirugías" },
+        { tipo: "texto", label: "Medicamentos actuales" },
+        { tipo: "texto", label: "Tratamiento psiquiátrico previo o actual" },
+        { tipo: "texto", label: "Antecedentes familiares relevantes", ancho: "completo" },
+      ],
+    },
+    {
+      titulo: "Historia psicológica previa",
+      campos: [
+        { tipo: "texto", label: "¿Ha llevado terapia antes?" },
+        { tipo: "lineas", label: "Con quién, cuándo y motivo", n: 2 },
+      ],
+    },
+    {
+      titulo: "Hábitos y consumo de sustancias",
+      campos: [
+        { tipo: "texto", label: "Alcohol" },
+        { tipo: "texto", label: "Tabaco" },
+        { tipo: "texto", label: "Otras sustancias" },
+        { tipo: "texto", label: "Sueño" },
+        { tipo: "texto", label: "Alimentación" },
+      ],
+    },
+    {
+      titulo: "Vida laboral / académica y red de apoyo",
+      campos: [
+        { tipo: "lineas", label: "Ocupación actual, satisfacción laboral, red de apoyo social", n: 3 },
+      ],
+    },
+    {
+      titulo: "Examen mental breve",
+      campos: [
+        { tipo: "texto", label: "Apariencia y actitud" },
+        { tipo: "texto", label: "Estado de ánimo" },
+        { tipo: "texto", label: "Orientación (persona/espacio/tiempo)" },
+        { tipo: "texto", label: "Ideación de riesgo (sí/no)" },
+      ],
+    },
+    {
+      titulo: "Observaciones del entrevistador",
+      campos: [{ tipo: "lineas", n: 4 }],
+    },
+  ],
+};
+
 // ── 2. Perfil sensorial ──
 const SISTEMAS_SENSORIALES = [
   "Se cubre los oídos ante ruidos cotidianos",
@@ -259,6 +349,7 @@ function hojaInstrumento(value: string, label: string): Formato {
 /** Catálogo completo de formatos imprimibles. */
 export const FORMATOS: Formato[] = [
   ENTREVISTA_INICIAL,
+  ENTREVISTA_ADULTOS,
   PERFIL_SENSORIAL,
   FORMATO_EVALUACION,
   ...TIPO_PRUEBA_OPCIONES.filter((t) => t.value !== "OTRO").map((t) =>

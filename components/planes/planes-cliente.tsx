@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -31,10 +31,23 @@ const hoy = () => new Date().toISOString().slice(0, 10);
 
 export function PlanesCliente() {
   const router = useRouter();
+  const [pacientePreseleccionado, setPacientePreseleccionado] = useState<
+    string | null
+  >(null);
   const { data: planes = [], isLoading } = usePlanes();
   const [filtro, setFiltro] = useState<EstatusPlan | "">("");
   const [busqueda, setBusqueda] = useState("");
   const [crear, setCrear] = useState(false);
+
+  // Leído directo de la URL (sin useSearchParams) para no forzar un
+  // boundary de Suspense en esta página solo por un query param opcional.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("paciente");
+    if (id) {
+      setPacientePreseleccionado(id);
+      setCrear(true);
+    }
+  }, []);
 
   const visibles = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -132,6 +145,7 @@ export function PlanesCliente() {
 
       {crear && (
         <ModalNuevoPlan
+          pacienteInicial={pacientePreseleccionado ?? undefined}
           onCerrar={() => setCrear(false)}
           onCreado={(id) => {
             setCrear(false);
@@ -180,9 +194,11 @@ function PlanCard({ plan }: { plan: PlanListItem }) {
 }
 
 function ModalNuevoPlan({
+  pacienteInicial,
   onCerrar,
   onCreado,
 }: {
+  pacienteInicial?: string;
   onCerrar: () => void;
   onCreado: (id: string) => void;
 }) {
@@ -190,7 +206,7 @@ function ModalNuevoPlan({
   const { data: psicologos = [] } = usePsicologos();
   const crearPlan = useCrearPlan();
 
-  const [pacienteId, setPacienteId] = useState("");
+  const [pacienteId, setPacienteId] = useState(pacienteInicial ?? "");
   const [psicologoId, setPsicologoId] = useState("");
   const [titulo, setTitulo] = useState("");
   const [diagnostico, setDiagnostico] = useState("");

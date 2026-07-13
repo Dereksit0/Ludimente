@@ -6,6 +6,7 @@ import { CalendarClock, Pencil, Search, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LudaAvatar } from "@/components/ui/luda-avatar";
@@ -179,6 +180,7 @@ function ModalEditar({
 function ReasignacionSection({ terapeutas }: { terapeutas: Terapeuta[] }) {
   const { data: pacientes = [], isLoading } = usePacientesAsignacion();
   const reasignar = useReasignarPaciente();
+  const confirmar = useConfirm();
   const [busqueda, setBusqueda] = useState("");
 
   const visibles = useMemo(() => {
@@ -192,6 +194,18 @@ function ReasignacionSection({ terapeutas }: { terapeutas: Terapeuta[] }) {
   }, [pacientes, busqueda]);
 
   async function cambiar(pacienteId: string, psicologoId: string) {
+    if (psicologoId) {
+      const t = terapeutas.find((x) => x.id === psicologoId);
+      if (t && t.cupo_maximo > 0 && t.pacientes_activos >= t.cupo_maximo) {
+        const ok = await confirmar({
+          titulo: "Terapeuta al límite de cupo",
+          mensaje: `${t.full_name} ya tiene ${t.pacientes_activos} de ${t.cupo_maximo} pacientes activos. ¿Asignar de todas formas?`,
+          confirmar: "Asignar de todas formas",
+          peligro: true,
+        });
+        if (!ok) return;
+      }
+    }
     await reasignar.mutateAsync({
       pacienteId,
       psicologoId: psicologoId || null,
@@ -233,7 +247,7 @@ function ReasignacionSection({ terapeutas }: { terapeutas: Terapeuta[] }) {
               <option value="">Sin asignar</option>
               {terapeutas.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.full_name}
+                  {t.full_name} ({t.pacientes_activos}/{t.cupo_maximo})
                 </option>
               ))}
             </Select>

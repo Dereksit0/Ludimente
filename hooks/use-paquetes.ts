@@ -47,6 +47,31 @@ export function useCrearPaquete() {
   });
 }
 
+export function useActualizarPaquete() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      nombre,
+      num_sesiones,
+      precio,
+    }: {
+      id: string;
+      nombre: string;
+      num_sesiones: number;
+      precio: number;
+    }): Promise<void> => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("paquetes")
+        .update({ nombre, num_sesiones, precio })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["paquetes"] }),
+  });
+}
+
 export function useEliminarPaquete() {
   const qc = useQueryClient();
   return useMutation({

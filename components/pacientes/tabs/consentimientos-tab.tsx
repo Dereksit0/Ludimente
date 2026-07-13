@@ -30,7 +30,7 @@ export function ConsentimientosTab({
           Consentimientos y autorizaciones
         </p>
         <Button asChild size="sm" variant="outline">
-          <Link href="/consentimientos">
+          <Link href={`/consentimientos?paciente=${paciente.id}`}>
             <Plus className="h-4 w-4" /> Nuevo
           </Link>
         </Button>

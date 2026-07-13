@@ -15,6 +15,7 @@ import { PlanTab } from "@/components/pacientes/tabs/plan-tab";
 import { PortalTab } from "@/components/pacientes/tabs/portal-tab";
 import { ProgresoTab } from "@/components/pacientes/tabs/progreso-tab";
 import { SesionesTab } from "@/components/pacientes/tabs/sesiones-tab";
+import { TamizajeTab } from "@/components/pacientes/tabs/tamizaje-tab";
 import { TimelineTab } from "@/components/pacientes/tabs/timeline-tab";
 import { TutoresTab } from "@/components/pacientes/tabs/tutores-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -73,6 +74,7 @@ export function ExpedienteCliente({ id }: { id: string }) {
             <TabsTrigger value="citas">Citas</TabsTrigger>
             <TabsTrigger value="sesiones">Sesiones</TabsTrigger>
             <TabsTrigger value="evaluaciones">Evaluaciones</TabsTrigger>
+            <TabsTrigger value="tamizaje">Tamizaje</TabsTrigger>
             <TabsTrigger value="plan">Plan</TabsTrigger>
             <TabsTrigger value="progreso">Progreso</TabsTrigger>
             <TabsTrigger value="documentos">Documentos</TabsTrigger>
@@ -98,6 +100,9 @@ export function ExpedienteCliente({ id }: { id: string }) {
           </TabsContent>
           <TabsContent value="evaluaciones">
             <EvaluacionesTab paciente={paciente} />
+          </TabsContent>
+          <TabsContent value="tamizaje">
+            <TamizajeTab paciente={paciente} />
           </TabsContent>
           <TabsContent value="plan">
             <PlanTab paciente={paciente} />

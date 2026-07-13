@@ -25,11 +25,20 @@ export type EstatusPaciente =
 
 export type TipoCita =
   | "evaluacion_inicial"
+  | "entrevista_adultos"
   | "sesion_intervencion"
+  | "terapia_lenguaje"
+  | "terapia_ocupacional"
+  | "terapia_conductual"
+  | "terapia_psicologica_adultos"
+  | "terapia_familiar"
+  | "valoracion_neuropsicologica"
   | "devolucion_resultados"
   | "seguimiento"
   | "entrevista_padres"
+  | "asesoria_escolar"
   | "taller"
+  | "urgencia"
   | "otro";
 
 export type ModalidadCita = "presencial" | "videollamada";
@@ -661,6 +670,22 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["configuracion"]["Row"]>;
         Relationships: [];
       };
+      precios_citas: {
+        Row: {
+          id: string;
+          tipo: TipoCita;
+          precio: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          tipo: TipoCita;
+          precio?: number;
+          updated_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["precios_citas"]["Insert"]>;
+        Relationships: [];
+      };
       paquetes: {
         Row: {
           id: string;
@@ -931,6 +956,8 @@ export interface Database {
           firmante_parentesco: string | null;
           firma_data: string | null;
           firmado_at: string | null;
+          requiere_decision: boolean;
+          decision: "acepta" | "no_acepta" | null;
           created_by: string | null;
           created_at: string;
           updated_at: string;
@@ -946,6 +973,8 @@ export interface Database {
           firmante_parentesco?: string | null;
           firma_data?: string | null;
           firmado_at?: string | null;
+          requiere_decision?: boolean;
+          decision?: "acepta" | "no_acepta" | null;
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;

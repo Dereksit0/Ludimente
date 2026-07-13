@@ -106,7 +106,7 @@ export function EvaluacionesTab({ paciente }: { paciente: PacienteDetalle }) {
   async function borrar(id: string) {
     const ok = await confirmar({
       titulo: "Eliminar evaluación",
-      mensaje: "¿Eliminar esta evaluación? Esta acción no se puede deshacer.",
+      mensaje: "¿Eliminar esta evaluación? Dejará de verse en el sistema (solo un administrador podría recuperarla directo en la base de datos).",
       confirmar: "Eliminar",
       peligro: true,
     });

@@ -25,7 +25,7 @@ export function ProgresoTab({ paciente }: { paciente: PacienteDetalle }) {
           Reportes de progreso para la familia
         </p>
         <Button asChild size="sm" variant="outline">
-          <Link href="/progreso">
+          <Link href={`/progreso?paciente=${paciente.id}`}>
             <Plus className="h-4 w-4" /> Nuevo reporte
           </Link>
         </Button>

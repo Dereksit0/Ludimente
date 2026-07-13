@@ -1,14 +1,17 @@
 import Link from "next/link";
 
-import { differenceInCalendarDays, format } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   AlertCircle,
   CalendarClock,
+  CalendarPlus,
   Cake,
   Clock,
+  FileSignature,
   Sparkles,
   TrendingUp,
+  UserPlus,
   Users,
   Wallet,
 } from "lucide-react";
@@ -22,6 +25,7 @@ import {
 } from "@/components/ui/luda-card";
 import { LudaStat } from "@/components/ui/luda-stat";
 import { createClient } from "@/lib/supabase/server";
+import { infoLimitePago } from "@/lib/pagos-limite";
 import {
   ESTATUS_CITA_LABEL,
   ESTATUS_PACIENTE_LABEL,
@@ -63,6 +67,9 @@ export default async function DashboardPage() {
     { data: pagosMes },
     { data: planesActivosData },
     { data: gastosMesData },
+    { count: solicitudesPendientes },
+    { count: evaluacionesEnProceso },
+    { count: consentimientosPendientes },
   ] = await Promise.all([
     supabase
       .from("pacientes")
@@ -95,6 +102,25 @@ export default async function DashboardPage() {
           .select("monto, fecha")
           .gte("fecha", inicioMes.toISOString().slice(0, 10))
       : Promise.resolve({ data: [] as { monto: number; fecha: string }[] }),
+    esAdmin
+      ? supabase
+          .from("solicitudes_cita")
+          .select("id", { count: "exact", head: true })
+          .eq("estatus", "pendiente")
+      : Promise.resolve({ count: 0 }),
+    esAdmin
+      ? supabase
+          .from("evaluaciones")
+          .select("id", { count: "exact", head: true })
+          .eq("estatus", "en_proceso")
+          .is("deleted_at", null)
+      : Promise.resolve({ count: 0 }),
+    esAdmin
+      ? supabase
+          .from("consentimientos")
+          .select("id", { count: "exact", head: true })
+          .eq("firmado", false)
+      : Promise.resolve({ count: 0 }),
   ]);
 
   const lista = pacientes ?? [];
@@ -142,7 +168,7 @@ export default async function DashboardPage() {
     0,
   );
   const vencidos = pendientes.filter(
-    (p) => differenceInCalendarDays(hoy, new Date(p.created_at)) >= 15,
+    (p) => infoLimitePago(p.created_at).vencido,
   ).length;
 
   const planesActivos = (planesActivosData ?? []).length;
@@ -188,6 +214,38 @@ export default async function DashboardPage() {
         )}
       </section>
 
+      {/* Accesos rápidos */}
+      <section className="flex flex-wrap gap-2">
+        <Link
+          href="/pacientes/nuevo"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-luda-lila px-3.5 py-2 text-sm font-semibold text-white transition-colors hover:bg-luda-lila-dark"
+        >
+          <UserPlus className="h-4 w-4" /> Nuevo paciente
+        </Link>
+        <Link
+          href="/agenda"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-luda-lila/30 px-3.5 py-2 text-sm font-semibold text-luda-lila-dark transition-colors hover:bg-luda-lila-light"
+        >
+          <CalendarPlus className="h-4 w-4" /> Nueva cita
+        </Link>
+        {esAdmin && (
+          <>
+            <Link
+              href="/cobranza"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-luda-lila/30 px-3.5 py-2 text-sm font-semibold text-luda-lila-dark transition-colors hover:bg-luda-lila-light"
+            >
+              <Wallet className="h-4 w-4" /> Registrar pago
+            </Link>
+            <Link
+              href="/consentimientos"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-luda-lila/30 px-3.5 py-2 text-sm font-semibold text-luda-lila-dark transition-colors hover:bg-luda-lila-light"
+            >
+              <FileSignature className="h-4 w-4" /> Nuevo consentimiento
+            </Link>
+          </>
+        )}
+      </section>
+
       {/* Alertas rápidas para admin */}
       {esAdmin && (
         <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -204,6 +262,20 @@ export default async function DashboardPage() {
             label="Pagos vencidos"
             valor={vencidos}
             alerta={vencidos > 0}
+          />
+          <MiniStat
+            label="Solicitudes del portal"
+            valor={solicitudesPendientes ?? 0}
+            alerta={(solicitudesPendientes ?? 0) > 0}
+          />
+          <MiniStat
+            label="Evaluaciones en proceso"
+            valor={evaluacionesEnProceso ?? 0}
+          />
+          <MiniStat
+            label="Consentimientos por firmar"
+            valor={consentimientosPendientes ?? 0}
+            alerta={(consentimientosPendientes ?? 0) > 0}
           />
         </section>
       )}
@@ -272,11 +344,9 @@ export default async function DashboardPage() {
                 </p>
               ) : (
                 pendientes.slice(0, 6).map((p) => {
-                  const dias = differenceInCalendarDays(
-                    hoy,
-                    new Date(p.created_at),
-                  );
-                  const vencido = dias >= 15;
+                  const info = infoLimitePago(p.created_at);
+                  const dias = -info.diasRestantes;
+                  const vencido = info.vencido;
                   return (
                     <div
                       key={p.id}

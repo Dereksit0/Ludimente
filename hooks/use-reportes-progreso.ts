@@ -152,6 +152,40 @@ export function useCrearReporte() {
   });
 }
 
+export interface EditarReporteInput {
+  titulo: string;
+  periodo_inicio?: string | null;
+  periodo_fin?: string | null;
+  resumen?: string | null;
+  logros?: string | null;
+  recomendaciones?: string | null;
+}
+
+export function useActualizarReporte(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: EditarReporteInput): Promise<void> => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("reportes_progreso")
+        .update({
+          titulo: input.titulo,
+          periodo_inicio: input.periodo_inicio || null,
+          periodo_fin: input.periodo_fin || null,
+          resumen: input.resumen || null,
+          logros: input.logros || null,
+          recomendaciones: input.recomendaciones || null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: reportesProgresoKeys.lista() });
+      void qc.invalidateQueries({ queryKey: reportesProgresoKeys.detalle(id) });
+    },
+  });
+}
+
 export function useToggleCompartirReporte() {
   const qc = useQueryClient();
   return useMutation({

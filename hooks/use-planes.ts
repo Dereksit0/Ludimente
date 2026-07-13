@@ -294,6 +294,24 @@ export function useEliminarObjetivo(planId: string) {
   });
 }
 
+/** Elimina un avance registrado por error (no toca el % actual del objetivo). */
+export function useEliminarSeguimiento(planId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("objetivo_seguimientos")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: planesKeys.detalle(planId) });
+    },
+  });
+}
+
 /** Registra un avance y sincroniza el % del objetivo. */
 export function useRegistrarSeguimiento(planId: string) {
   const qc = useQueryClient();
@@ -318,13 +336,17 @@ export function useRegistrarSeguimiento(planId: string) {
         created_by: user?.id ?? null,
       });
       if (error) throw error;
-      // El % del objetivo refleja el último avance; lo marcamos logrado al 100%.
+      // El % del objetivo refleja el último avance. Un avance de 0% no debe
+      // reabrir un objetivo que el terapeuta ya cerró a mano (p. ej. como
+      // "no logrado"): solo movemos el estatus cuando hay progreso real.
+      const cambios: { progreso: number; estatus?: "logrado" | "en_progreso" } = {
+        progreso,
+      };
+      if (progreso >= 100) cambios.estatus = "logrado";
+      else if (progreso > 0) cambios.estatus = "en_progreso";
       const { error: e2 } = await supabase
         .from("objetivos_intervencion")
-        .update({
-          progreso,
-          estatus: progreso >= 100 ? "logrado" : "en_progreso",
-        })
+        .update(cambios)
         .eq("id", objetivoId);
       if (e2) throw e2;
     },

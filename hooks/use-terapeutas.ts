@@ -46,7 +46,9 @@ export function useTerapeutas() {
       const { data: citas } = await supabase
         .from("citas")
         .select("psicologo_id, fecha_inicio")
-        .gte("fecha_inicio", inicioMes.toISOString());
+        .gte("fecha_inicio", inicioMes.toISOString())
+        // No contar como "carga" citas que no se llevaron a cabo.
+        .not("estatus", "in", "(cancelada,no_asistio,reagendada)");
 
       const activosPorPsi = new Map<string, number>();
       const inactivos = new Set(["alta", "inactivo"]);

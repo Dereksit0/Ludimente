@@ -273,6 +273,10 @@ function ModalItem({
       toast.error(primerError(val.error));
       return;
     }
+    if (estado === "prestado" && (!prestadoA.trim() || !fechaPrestamo)) {
+      toast.error("Indica a quién y desde cuándo está prestado.");
+      return;
+    }
     const datos = {
       nombre: nombre.trim(),
       categoria,
@@ -375,6 +379,7 @@ function ModalItem({
                 id="prestadoA"
                 value={prestadoA}
                 onChange={(e) => setPrestadoA(e.target.value)}
+                required
               />
             </div>
             <div className="space-y-1.5">
@@ -384,6 +389,7 @@ function ModalItem({
                 type="date"
                 value={fechaPrestamo}
                 onChange={(e) => setFechaPrestamo(e.target.value)}
+                required
               />
             </div>
           </div>

@@ -95,7 +95,7 @@ export function ReportesCliente() {
   const [hasta, setHasta] = useState("");
   const [psicologoId, setPsicologoId] = useState("");
 
-  const { data, isLoading } = useReportes({
+  const { data, isLoading, isError } = useReportes({
     desde: desde || undefined,
     hasta: hasta || undefined,
     psicologoId: psicologoId || undefined,
@@ -148,12 +148,20 @@ export function ReportesCliente() {
         </Select>
       </div>
 
-      {isLoading || !data ? (
+      {isError && (
+        <LudaCard className="border border-red-200 bg-red-50 p-6">
+          <p className="text-sm font-semibold text-red-600">
+            No se pudieron cargar los reportes. Intenta recargar la página.
+          </p>
+        </LudaCard>
+      )}
+
+      {!isError && (isLoading || !data) ? (
         <div className="space-y-4">
           <div className="skeleton-luda h-24" />
           <div className="skeleton-luda h-64" />
         </div>
-      ) : (
+      ) : !isError && data ? (
         <>
           <section className="grid grid-cols-2 gap-4 lg:grid-cols-5">
             <LudaStat label="Pacientes" value={data.totales.pacientes} icon={Users} acento="lila" />
@@ -193,6 +201,7 @@ export function ReportesCliente() {
             </LudaCard>
 
             <GraficaBarras titulo="Citas por día" data={data.citasPorDia} color="#9B70C4" />
+            <GraficaBarras titulo="Citas por estatus" data={data.citasPorEstatus} color="#D7B8E8" vertical />
             <GraficaBarras titulo="Pacientes por terapeuta" data={data.pacientesPorTerapeuta} color="#A8C8E8" vertical />
             <GraficaBarras titulo="Ausentismo por paciente" data={data.ausentismoPorPaciente} color="#F2B5C8" vertical />
             <GraficaBarras titulo="Diagnósticos más frecuentes" data={data.diagnosticosTop} color="#FCD9A8" vertical />
@@ -203,9 +212,17 @@ export function ReportesCliente() {
                 color="#B8E0C8"
               />
             )}
+            {esAdmin && (
+              <GraficaBarras
+                titulo="Ingresos por tipo de cita"
+                data={data.ingresosPorTipoCita}
+                color="#9B70C4"
+                vertical
+              />
+            )}
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

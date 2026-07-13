@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarDays, CalendarPlus, Check, Loader2 } from "lucide-react";
+import { CalendarDays, CalendarPlus, Check, Clock, Loader2, X } from "lucide-react";
 
 import {
   LudaCard,
@@ -13,21 +13,27 @@ import {
   LudaCardHeader,
   LudaCardTitle,
 } from "@/components/ui/luda-card";
-import type { PortalCita } from "@/lib/portal/data";
+import type { PortalCita, PortalSolicitud } from "@/lib/portal/data";
+import { TIPO_CITA_LABEL } from "@/types/app.types";
 
 import { confirmarCitaPortal, solicitarCitaPortal } from "../../app/portal/actions";
 
-const TIPO_LABEL: Record<string, string> = {
-  evaluacion_inicial: "Evaluación inicial",
-  sesion_intervencion: "Sesión de intervención",
-  devolucion_resultados: "Devolución de resultados",
-  seguimiento: "Seguimiento",
-  entrevista_padres: "Entrevista con padres",
-  taller: "Taller",
-  otro: "Cita",
+const ESTADO_SOLICITUD: Record<
+  string,
+  { label: string; clase: string; icon: typeof Clock }
+> = {
+  pendiente: { label: "En revisión", clase: "bg-yellow-50 text-yellow-700", icon: Clock },
+  atendida: { label: "Agendada", clase: "bg-green-50 text-green-700", icon: Check },
+  rechazada: { label: "No se pudo agendar", clase: "bg-red-50 text-red-600", icon: X },
 };
 
-export function PortalCitas({ citas }: { citas: PortalCita[] }) {
+export function PortalCitas({
+  citas,
+  solicitudes = [],
+}: {
+  citas: PortalCita[];
+  solicitudes?: PortalSolicitud[];
+}) {
   const router = useRouter();
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -84,7 +90,7 @@ export function PortalCitas({ citas }: { citas: PortalCita[] }) {
             >
               <div>
                 <p className="text-sm font-bold text-luda-gris">
-                  {TIPO_LABEL[c.tipo] ?? "Cita"}
+                  {TIPO_CITA_LABEL[c.tipo] ?? "Cita"}
                 </p>
                 <p className="text-xs capitalize text-luda-gris-light">
                   {format(new Date(c.fecha), "EEEE d 'de' MMMM · h:mm a", { locale: es })}
@@ -111,6 +117,36 @@ export function PortalCitas({ citas }: { citas: PortalCita[] }) {
               )}
             </div>
           ))
+        )}
+
+        {/* Solicitudes recientes y su estatus */}
+        {solicitudes.filter((s) => s.estatus === "pendiente").length > 0 && (
+          <div className="space-y-1.5">
+            {solicitudes
+              .filter((s) => s.estatus === "pendiente")
+              .map((s, i) => {
+                const info = ESTADO_SOLICITUD[s.estatus] ?? ESTADO_SOLICITUD.pendiente;
+                const Icon = info.icon;
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-luda-fondo px-4 py-2.5"
+                  >
+                    <p className="min-w-0 text-xs text-luda-gris-light">
+                      Solicitaste una cita
+                      {s.fechaPreferida
+                        ? ` para el ${format(new Date(s.fechaPreferida), "d 'de' MMM", { locale: es })}`
+                        : ""}
+                    </p>
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${info.clase}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" /> {info.label}
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
         )}
 
         {/* Solicitar nueva cita */}

@@ -12,7 +12,11 @@ import {
 import { es } from "date-fns/locale";
 
 import { createClient } from "@/lib/supabase/client";
-import { ESTATUS_CITA_LABEL, ESTATUS_PACIENTE_LABEL } from "@/types/app.types";
+import {
+  ESTATUS_CITA_LABEL,
+  ESTATUS_PACIENTE_LABEL,
+  TIPO_CITA_LABEL,
+} from "@/types/app.types";
 import { METODO_PAGO_OPCIONES } from "@/lib/catalogos";
 import type { EstatusCita, EstatusPaciente, MetodoPago } from "@/types/database.types";
 
@@ -31,6 +35,7 @@ export interface ReportesData {
   pacientesPorTerapeuta: { nombre: string; total: number }[];
   diagnosticosTop: { nombre: string; total: number }[];
   ingresosPorMetodo: { nombre: string; total: number }[];
+  ingresosPorTipoCita: { nombre: string; total: number }[];
   ausentismoPorPaciente: { nombre: string; total: number }[];
   totales: {
     pacientes: number;
@@ -80,7 +85,7 @@ export function useReportes(filtros: FiltrosReportes = {}) {
         pacQ,
         supabase
           .from("pagos")
-          .select("monto_final, fecha_pago, estatus, metodo_pago")
+          .select("monto_final, fecha_pago, estatus, metodo_pago, cita_id")
           .gte("fecha_pago", desde.toISOString())
           .lte("fecha_pago", hasta.toISOString()),
         supabase.from("profiles").select("id, full_name, role, activo"),
@@ -94,6 +99,19 @@ export function useReportes(filtros: FiltrosReportes = {}) {
       const citas = cit.data ?? [];
       const pacientes = pac.data ?? [];
       const pagos = pag.data ?? [];
+
+      // Tipo de cita de cada pago cobrado (para desglosar ingresos por servicio).
+      const citaIdsPagos = [
+        ...new Set(pagos.map((p) => p.cita_id).filter(Boolean)),
+      ] as string[];
+      const tipoPorCitaId = new Map<string, string>();
+      if (citaIdsPagos.length > 0) {
+        const { data: citasDePagos } = await supabase
+          .from("citas")
+          .select("id, tipo")
+          .in("id", citaIdsPagos);
+        for (const c of citasDePagos ?? []) tipoPorCitaId.set(c.id, c.tipo);
+      }
       const perfMap = new Map((perf.data ?? []).map((p) => [p.id, p.full_name]));
       const pacMap = new Map(
         pacientes.map((p) => [p.id, `${p.nombre} ${p.apellido_paterno}`]),
@@ -162,6 +180,7 @@ export function useReportes(filtros: FiltrosReportes = {}) {
       const ingresoPorKey: Record<string, number> = {};
       const nuevosPorKey: Record<string, number> = {};
       const metodoCount: Record<string, number> = {};
+      const tipoCitaCount: Record<string, number> = {};
       let ingresosRango = 0;
       for (const p of pagos) {
         if (p.estatus !== "pagado" || !p.fecha_pago) continue;
@@ -171,6 +190,9 @@ export function useReportes(filtros: FiltrosReportes = {}) {
         ingresosRango += monto;
         metodoCount[p.metodo_pago as MetodoPago] =
           (metodoCount[p.metodo_pago as MetodoPago] ?? 0) + monto;
+        const tipo = p.cita_id ? tipoPorCitaId.get(p.cita_id) : undefined;
+        const claveTipo = tipo ? (TIPO_CITA_LABEL[tipo] ?? tipo) : "Sin cita asociada";
+        tipoCitaCount[claveTipo] = (tipoCitaCount[claveTipo] ?? 0) + monto;
       }
       for (const p of pacientes) {
         if (!p.fecha_ingreso) continue;
@@ -189,6 +211,9 @@ export function useReportes(filtros: FiltrosReportes = {}) {
         nombre: METODO_LABEL[k] ?? k,
         total,
       }));
+      const ingresosPorTipoCita = Object.entries(tipoCitaCount)
+        .map(([nombre, total]) => ({ nombre, total }))
+        .sort((a, b) => b.total - a.total);
 
       // Pacientes por terapeuta
       const terapCount: Record<string, number> = {};
@@ -240,6 +265,7 @@ export function useReportes(filtros: FiltrosReportes = {}) {
         pacientesPorTerapeuta,
         diagnosticosTop,
         ingresosPorMetodo,
+        ingresosPorTipoCita,
         ausentismoPorPaciente,
         totales: {
           pacientes: pacientes.length,

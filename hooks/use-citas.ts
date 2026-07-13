@@ -111,6 +111,9 @@ export function useCitasRango(desde: string, hasta: string) {
         .select("*")
         .gte("fecha_inicio", desde)
         .lte("fecha_inicio", hasta)
+        // Las citas reagendadas quedan sustituidas por una cita nueva
+        // (ver cita_original_id); no deben verse dos veces en la agenda.
+        .neq("estatus", "reagendada")
         .order("fecha_inicio");
       if (error) throw error;
 
@@ -161,9 +164,13 @@ export function useCrearCita() {
       const rango = aRango(fecha, hora, duracion_min);
       await validarContraHorario(rango.fecha_inicio, rango.fecha_fin);
       await verificarSolape(input.psicologo_id, rango.fecha_inicio, rango.fecha_fin);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       const { error } = await supabase.from("citas").insert({
         ...resto,
         notas_previas: notas_previas || null,
+        created_by: user?.id ?? null,
         ...rango,
       });
       if (error) throw error;
@@ -233,13 +240,26 @@ export function useEliminarCita() {
     mutationFn: async (id: string): Promise<void> => {
       const supabase = createClient();
       const { error } = await supabase.from("citas").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        // FK violation: la cita ya tiene un pago o una nota de sesión ligada.
+        if (error.code === "23503") {
+          throw new Error(
+            "No se puede eliminar: esta cita ya tiene un pago o una nota de sesión asociada. Cancélala en vez de eliminarla.",
+          );
+        }
+        throw error;
+      }
     },
     onSuccess: () => invalidar(qc),
   });
 }
 
-/** Reagenda una cita (arrastrar): mueve el rango conservando la duración. */
+/**
+ * Reagenda una cita (arrastrar): la cita original queda marcada
+ * `reagendada` (con motivo) y se crea una cita nueva en el horario
+ * destino, enlazada por `cita_original_id`. Así queda rastro de que
+ * se movió, en vez de perderse el horario/fecha anterior.
+ */
 export function useReagendarCita() {
   const qc = useQueryClient();
   return useMutation({
@@ -257,11 +277,38 @@ export function useReagendarCita() {
       const supabase = createClient();
       await validarContraHorario(fechaInicio, fechaFin);
       await verificarSolape(psicologoId, fechaInicio, fechaFin, id);
-      const { error } = await supabase
+
+      const { data: original, error: errOriginal } = await supabase
         .from("citas")
-        .update({ fecha_inicio: fechaInicio, fecha_fin: fechaFin })
+        .select(
+          "paciente_id, psicologo_id, tipo, modalidad, estatus, notas_previas",
+        )
+        .eq("id", id)
+        .single();
+      if (errOriginal) throw errOriginal;
+
+      // Una cita ya completada/cancelada no se "reagenda": se crea aparte.
+      const estatusNueva =
+        original.estatus === "confirmada" ? "confirmada" : "programada";
+
+      const { error: errNueva } = await supabase.from("citas").insert({
+        paciente_id: original.paciente_id,
+        psicologo_id: original.psicologo_id,
+        tipo: original.tipo,
+        modalidad: original.modalidad,
+        notas_previas: original.notas_previas,
+        estatus: estatusNueva,
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        cita_original_id: id,
+      });
+      if (errNueva) throw errNueva;
+
+      const { error: errVieja } = await supabase
+        .from("citas")
+        .update({ estatus: "reagendada" })
         .eq("id", id);
-      if (error) throw error;
+      if (errVieja) throw errVieja;
     },
     onSuccess: () => invalidar(qc),
   });

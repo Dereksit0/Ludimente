@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { createClient } from "@/lib/supabase/client";
-import type { Tables, TablesInsert } from "@/types/database.types";
+import type { Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 
 export type Gasto = Tables<"gastos">;
 
@@ -80,6 +80,24 @@ export function useCrearGasto() {
       const { error } = await supabase
         .from("gastos")
         .insert({ ...input, created_by: user?.id ?? null });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: gastosKeys.lista() }),
+  });
+}
+
+export function useActualizarGasto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      cambios,
+    }: {
+      id: string;
+      cambios: TablesUpdate<"gastos">;
+    }): Promise<void> => {
+      const supabase = createClient();
+      const { error } = await supabase.from("gastos").update(cambios).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: gastosKeys.lista() }),

@@ -20,6 +20,8 @@ import {
   useUsarSesion,
   type PaquetePaciente,
 } from "@/hooks/use-paquetes";
+import { METODO_PAGO_OPCIONES } from "@/lib/catalogos";
+import type { MetodoPago } from "@/types/database.types";
 
 const mx = (n: number) =>
   `$${n.toLocaleString("es-MX", { minimumFractionDigits: 2 })}`;
@@ -33,6 +35,7 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
   const [sel, setSel] = useState("");
   const [abonando, setAbonando] = useState<PaquetePaciente | null>(null);
   const [montoAbono, setMontoAbono] = useState("");
+  const [metodoAbono, setMetodoAbono] = useState<MetodoPago>("efectivo");
 
   async function onAsignar() {
     const paquete = catalogo.find((p) => p.id === sel);
@@ -57,6 +60,7 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
 
   function abrirAbono(pp: PaquetePaciente) {
     setMontoAbono(pp.saldo.toFixed(2));
+    setMetodoAbono("efectivo");
     setAbonando(pp);
   }
 
@@ -76,7 +80,7 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
       await abonar.mutateAsync({
         paquete_paciente_id: abonando.id,
         monto,
-        metodo_pago: "efectivo",
+        metodo_pago: metodoAbono,
       });
       toast.success("Abono registrado");
       setAbonando(null);
@@ -183,6 +187,20 @@ export function PaquetesSection({ paciente }: { paciente: PacienteDetalle }) {
                 value={montoAbono}
                 onChange={(e) => setMontoAbono(e.target.value)}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="metodo-abono">Método de pago</Label>
+              <Select
+                id="metodo-abono"
+                value={metodoAbono}
+                onChange={(e) => setMetodoAbono(e.target.value as MetodoPago)}
+              >
+                {METODO_PAGO_OPCIONES.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </Select>
             </div>
             <div className="flex justify-end gap-2">
               <Button

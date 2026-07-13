@@ -74,7 +74,7 @@ function detalleAInput(d: EvaluacionDetalle): Partial<EvaluacionInput> {
 }
 
 export function EvaluacionesCliente() {
-  const { data: evals = [], isLoading } = useEvaluaciones();
+  const { data: evals = [], isLoading, isError } = useEvaluaciones();
   const crear = useCrearEvaluacion();
   const actualizar = useActualizarEvaluacion();
   const eliminar = useEliminarEvaluacion();
@@ -124,7 +124,7 @@ export function EvaluacionesCliente() {
   async function borrar(id: string) {
     const ok = await confirmar({
       titulo: "Eliminar evaluación",
-      mensaje: "¿Eliminar esta evaluación? Esta acción no se puede deshacer.",
+      mensaje: "¿Eliminar esta evaluación? Dejará de verse en el sistema (solo un administrador podría recuperarla directo en la base de datos).",
       confirmar: "Eliminar",
       peligro: true,
     });
@@ -157,7 +157,14 @@ export function EvaluacionesCliente() {
       </div>
 
       {isLoading && <p className="text-sm text-luda-gris-light">Cargando…</p>}
-      {!isLoading && visibles.length === 0 && (
+      {isError && (
+        <LudaCard className="border border-red-200 bg-red-50 p-6">
+          <p className="text-sm font-semibold text-red-600">
+            No se pudieron cargar las evaluaciones. Intenta recargar la página.
+          </p>
+        </LudaCard>
+      )}
+      {!isLoading && !isError && visibles.length === 0 && (
         <LudaCard className="p-6">
           <p className="text-sm text-luda-gris-light">No hay evaluaciones.</p>
         </LudaCard>
