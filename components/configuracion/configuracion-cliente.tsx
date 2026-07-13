@@ -495,6 +495,14 @@ function PaquetesCatalogoTab() {
   const actualizar = useActualizarPaquete();
   const [editando, setEditando] = useState<string | null>(null);
 
+  const [numSesiones, setNumSesiones] = useState("");
+  const [precioSesion, setPrecioSesion] = useState("");
+  const [descuentoPct, setDescuentoPct] = useState("");
+
+  const subtotal = (Number(numSesiones) || 0) * (Number(precioSesion) || 0);
+  const descuentoMonto = subtotal * ((Number(descuentoPct) || 0) / 100);
+  const precioTotal = Math.max(subtotal - descuentoMonto, 0);
+
   async function onCrear(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -502,10 +510,13 @@ function PaquetesCatalogoTab() {
     try {
       await crear.mutateAsync({
         nombre: String(fd.get("nombre") ?? ""),
-        num_sesiones: Number(fd.get("num_sesiones") ?? 0),
-        precio: Number(fd.get("precio") ?? 0),
+        num_sesiones: Number(numSesiones),
+        precio: precioTotal,
       });
       form.reset();
+      setNumSesiones("");
+      setPrecioSesion("");
+      setDescuentoPct("");
       toast.success("Paquete creado");
     } catch {
       toast.error("No se pudo crear el paquete");
@@ -516,18 +527,58 @@ function PaquetesCatalogoTab() {
     <div className="space-y-6">
       <LudaCard className="space-y-4 p-5">
         <h3 className="font-bold text-luda-gris">Nuevo paquete</h3>
-        <form onSubmit={onCrear} className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <Campo label="Nombre" requerido className="sm:col-span-2">
+        <form onSubmit={onCrear} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Campo label="Nombre" requerido className="sm:col-span-3">
             <Input name="nombre" required placeholder="Ej. Paquete 10 sesiones" />
           </Campo>
           <Campo label="N° sesiones" requerido>
-            <Input name="num_sesiones" type="number" min={1} required />
+            <Input
+              name="num_sesiones"
+              type="number"
+              min={1}
+              required
+              value={numSesiones}
+              onChange={(e) => setNumSesiones(e.target.value)}
+            />
           </Campo>
-          <Campo label="Precio" requerido>
-            <Input name="precio" type="number" step="0.01" min={0} required />
+          <Campo label="Precio por sesión" requerido>
+            <Input
+              name="precio_sesion"
+              type="number"
+              step="0.01"
+              min={0}
+              required
+              value={precioSesion}
+              onChange={(e) => setPrecioSesion(e.target.value)}
+            />
+          </Campo>
+          <Campo label="Descuento (%)">
+            <Input
+              name="descuento_pct"
+              type="number"
+              step="0.01"
+              min={0}
+              max={100}
+              placeholder="0"
+              value={descuentoPct}
+              onChange={(e) => setDescuentoPct(e.target.value)}
+            />
+          </Campo>
+          <Campo label="Precio total" className="sm:col-span-2">
+            <div className="flex h-9 items-center gap-2 rounded-lg border border-luda-borde bg-luda-fondo px-3 text-sm">
+              <span className="font-bold text-luda-gris">{mxn(precioTotal)}</span>
+              {descuentoMonto > 0 && (
+                <span className="text-xs text-luda-gris-light line-through">
+                  {mxn(subtotal)}
+                </span>
+              )}
+            </div>
           </Campo>
           <div className="flex items-end">
-            <Button type="submit" disabled={crear.isPending}>
+            <Button
+              type="submit"
+              disabled={crear.isPending || !numSesiones || !precioSesion}
+            >
               {crear.isPending ? (
                 <>
                   <Loader2 className="animate-spin" /> Creando…
