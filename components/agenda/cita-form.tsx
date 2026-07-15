@@ -7,8 +7,10 @@ import { useForm } from "react-hook-form";
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { usePsicologos } from "@/hooks/use-perfiles";
 import {
@@ -20,6 +22,7 @@ import { citaSchema, type CitaInput } from "@/lib/validations/cita.schema";
 
 interface CitaFormProps {
   inicial?: Partial<CitaInput>;
+  citaId?: string;
   pacienteFijo?: string; // si se abre desde un expediente
   guardando: boolean;
   onGuardar: (valores: CitaInput) => void;
@@ -27,6 +30,7 @@ interface CitaFormProps {
 
 export function CitaForm({
   inicial,
+  citaId,
   pacienteFijo,
   guardando,
   onGuardar,
@@ -45,6 +49,9 @@ export function CitaForm({
   const {
     register,
     handleSubmit,
+    watch,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<CitaInput>({
     resolver: zodResolver(citaSchema),
@@ -60,8 +67,20 @@ export function CitaForm({
     },
   });
 
+  const { limpiar } = useFormDraft({
+    clave: `draft:cita:${pacienteFijo ?? inicial?.paciente_id ?? "sin-paciente"}:${citaId ?? "nueva"}`,
+    activo: true,
+    watch,
+    reset,
+  });
+
+  function submit(v: CitaInput) {
+    limpiar();
+    onGuardar(v);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} className="space-y-4">
       {!pacienteFijo && (
         <Campo label="Paciente" requerido error={errors.paciente_id?.message}>
           <Select {...register("paciente_id")}>
@@ -132,6 +151,11 @@ export function CitaForm({
         <Textarea
           {...register("notas_previas")}
           placeholder="Indicaciones, material a preparar…"
+        />
+        <RedactarBoton
+          valor={watch("notas_previas") ?? ""}
+          contexto="Notas previas de una cita clínica"
+          onRedactado={(t) => setValue("notas_previas", t, { shouldDirty: true })}
         />
       </Campo>
 

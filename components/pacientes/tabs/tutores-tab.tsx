@@ -171,6 +171,8 @@ export function TutoresTab({ paciente }: { paciente: PacienteDetalle }) {
       >
         <TutorForm
           key={editando?.id ?? "nuevo"}
+          pacienteId={paciente.id}
+          tutorId={editando?.id}
           inicial={editando ? tutorAInput(editando) : undefined}
           guardando={crear.isPending || actualizar.isPending}
           onGuardar={onGuardar}

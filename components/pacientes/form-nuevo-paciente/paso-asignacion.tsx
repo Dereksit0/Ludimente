@@ -5,6 +5,7 @@ import { useFormContext } from "react-hook-form";
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { SugerenciaPlanBoton } from "@/components/planes/sugerencia-plan-boton";
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { usePsicologos } from "@/hooks/use-perfiles";
@@ -15,6 +16,7 @@ export function PasoAsignacion() {
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext<NuevoPacienteInput>();
   const { data: psicologos, isLoading } = usePsicologos();
@@ -69,6 +71,11 @@ export function PasoAsignacion() {
           id="notas_generales"
           placeholder="Observaciones iniciales, contexto, acuerdos…"
           {...register("notas_generales")}
+        />
+        <RedactarBoton
+          valor={watch("notas_generales") ?? ""}
+          contexto="Notas generales al registrar un nuevo paciente"
+          onRedactado={(t) => setValue("notas_generales", t, { shouldDirty: true })}
         />
       </Campo>
 

@@ -11,9 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfiguracion } from "@/hooks/use-configuracion";
+import { useDraftState } from "@/hooks/use-form-draft";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { usePsicologos } from "@/hooks/use-perfiles";
 import {
@@ -257,6 +259,13 @@ function ModalPlaneacion({
   const set = (k: keyof typeof f, v: string | number) =>
     setF((prev) => ({ ...prev, [k]: v }));
 
+  const { limpiar } = useDraftState({
+    clave: `draft:planeacion:${inicial?.id ?? "nueva"}`,
+    activo: true,
+    valores: f,
+    onRestaurar: setF,
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!f.paciente_id) {
@@ -283,6 +292,7 @@ function ModalPlaneacion({
         await crear.mutateAsync(payload);
         toast.success("Planeación creada");
       }
+      limpiar();
       onCerrar();
     } catch {
       toast.error("No se pudo guardar (revisa permisos: admin o terapeuta)");
@@ -365,6 +375,11 @@ function ModalPlaneacion({
             className="min-h-[90px]"
             placeholder={"Ubicación tempo-espacial\nAgarre trípode\nEscritura 1-10"}
           />
+          <RedactarBoton
+            valor={f.objetivos}
+            contexto="Lista de objetivos de planeación semanal, un objetivo por línea: conserva ese formato de lista"
+            onRedactado={(t) => set("objetivos", t)}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -396,6 +411,11 @@ function ModalPlaneacion({
             onChange={(e) => set("desarrollo", e.target.value)}
             className="min-h-[80px]"
           />
+          <RedactarBoton
+            valor={f.desarrollo}
+            contexto="Lista de desarrollo de la sesión en planeación semanal, un paso por línea: conserva ese formato de lista"
+            onRedactado={(t) => set("desarrollo", t)}
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -405,6 +425,11 @@ function ModalPlaneacion({
             value={f.materiales}
             onChange={(e) => set("materiales", e.target.value)}
             className="min-h-[70px]"
+          />
+          <RedactarBoton
+            valor={f.materiales}
+            contexto="Lista de materiales de planeación semanal, uno por línea: conserva ese formato de lista"
+            onRedactado={(t) => set("materiales", t)}
           />
         </div>
 
@@ -416,6 +441,11 @@ function ModalPlaneacion({
             onChange={(e) => set("notas", e.target.value)}
             placeholder="Observaciones para quien cubra la sesión…"
             className="min-h-[60px]"
+          />
+          <RedactarBoton
+            valor={f.notas}
+            contexto="Notas de planeación semanal para quien cubra la sesión"
+            onRedactado={(t) => set("notas", t)}
           />
         </div>
 

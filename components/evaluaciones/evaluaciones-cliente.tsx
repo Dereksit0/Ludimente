@@ -209,6 +209,7 @@ export function EvaluacionesCliente() {
         className="max-w-2xl"
       >
         <EvaluacionForm
+          evaluacionId={editId ?? undefined}
           inicial={inicial}
           guardando={crear.isPending || actualizar.isPending}
           onGuardar={guardar}

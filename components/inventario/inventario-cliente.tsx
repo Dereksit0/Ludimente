@@ -14,8 +14,10 @@ import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { LudaStat } from "@/components/ui/luda-stat";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useDraftState } from "@/hooks/use-form-draft";
 import {
   useActualizarItem,
   useCrearItem,
@@ -263,6 +265,31 @@ function ModalItem({
   const [fechaPrestamo, setFechaPrestamo] = useState(item?.fecha_prestamo ?? "");
   const [notas, setNotas] = useState(item?.notas ?? "");
 
+  const { limpiar } = useDraftState({
+    clave: `draft:inventario:${item?.id ?? "nuevo"}`,
+    activo: true,
+    valores: {
+      nombre,
+      categoria,
+      cantidad,
+      ubicacion,
+      estado,
+      prestadoA,
+      fechaPrestamo,
+      notas,
+    },
+    onRestaurar: (b) => {
+      setNombre(b.nombre);
+      setCategoria(b.categoria);
+      setCantidad(b.cantidad);
+      setUbicacion(b.ubicacion);
+      setEstado(b.estado);
+      setPrestadoA(b.prestadoA);
+      setFechaPrestamo(b.fechaPrestamo);
+      setNotas(b.notas);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const val = itemInventarioSchema.safeParse({
@@ -295,6 +322,7 @@ function ModalItem({
         await crear.mutateAsync(datos);
         toast.success("Artículo agregado");
       }
+      limpiar();
       onCerrar();
     } catch {
       toast.error("No se pudo guardar");
@@ -400,6 +428,11 @@ function ModalItem({
             id="notas"
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
+          />
+          <RedactarBoton
+            valor={notas}
+            contexto="Nota de un artículo de inventario del consultorio"
+            onRedactado={setNotas}
           />
         </div>
         <div className="flex justify-end gap-2 pt-1">

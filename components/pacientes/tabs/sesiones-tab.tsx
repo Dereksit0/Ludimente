@@ -15,8 +15,10 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { usePsicologos } from "@/hooks/use-perfiles";
 import type { PacienteDetalle } from "@/hooks/use-pacientes";
 import {
@@ -56,12 +58,16 @@ function sesionAInput(s: Sesion): Partial<SesionInput> {
 }
 
 export function SesionForm({
+  pacienteId,
+  sesionId,
   psicologoSugerido,
   citaId,
   inicial,
   guardando,
   onGuardar,
 }: {
+  pacienteId: string;
+  sesionId?: string;
   psicologoSugerido?: string;
   citaId?: string;
   inicial?: Partial<SesionInput>;
@@ -73,6 +79,8 @@ export function SesionForm({
     register,
     handleSubmit,
     watch,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<SesionInput>({
     resolver: zodResolver(sesionSchema),
@@ -99,8 +107,20 @@ export function SesionForm({
 
   const tuvoDesborde = watch("tuvo_desborde");
 
+  const { limpiar } = useFormDraft({
+    clave: `draft:sesion:${pacienteId}:${sesionId ?? "nueva"}`,
+    activo: true,
+    watch,
+    reset,
+  });
+
+  function submit(v: SesionInput) {
+    limpiar();
+    onGuardar(v);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} className="space-y-4">
       <input type="hidden" {...register("cita_id")} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Campo label="Terapeuta" requerido error={errors.psicologo_id?.message}>
@@ -164,34 +184,74 @@ export function SesionForm({
               placeholder="¿Qué lo desencadenó, cómo se manifestó y cómo se regresó a la calma?"
               {...register("desborde_notas")}
             />
+            <RedactarBoton
+              valor={watch("desborde_notas") ?? ""}
+              contexto="Nota de sesión clínica: descripción de un desborde emocional"
+              onRedactado={(t) => setValue("desborde_notas", t, { shouldDirty: true })}
+            />
           </div>
         )}
       </div>
 
       <Campo label="Objetivos de la sesión" requerido error={errors.objetivos_sesion?.message}>
         <Textarea {...register("objetivos_sesion")} />
+        <RedactarBoton
+          valor={watch("objetivos_sesion") ?? ""}
+          contexto="Nota de sesión clínica: objetivos de la sesión"
+          onRedactado={(t) => setValue("objetivos_sesion", t, { shouldDirty: true })}
+        />
       </Campo>
       <Campo label="Desarrollo de la sesión" requerido error={errors.desarrollo_sesion?.message}>
         <Textarea {...register("desarrollo_sesion")} />
+        <RedactarBoton
+          valor={watch("desarrollo_sesion") ?? ""}
+          contexto="Nota de sesión clínica: desarrollo de la sesión"
+          onRedactado={(t) => setValue("desarrollo_sesion", t, { shouldDirty: true })}
+        />
       </Campo>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Campo label="Logros">
           <Textarea {...register("logros_sesion")} />
+          <RedactarBoton
+            valor={watch("logros_sesion") ?? ""}
+            contexto="Nota de sesión clínica: logros del paciente"
+            onRedactado={(t) => setValue("logros_sesion", t, { shouldDirty: true })}
+          />
         </Campo>
-        <Campo label="Dificultades">
+        <Campo label="Aspectos a fortalecer">
           <Textarea {...register("dificultades_encontradas")} />
+          <RedactarBoton
+            valor={watch("dificultades_encontradas") ?? ""}
+            contexto="Nota de sesión clínica: aspectos a fortalecer del paciente"
+            onRedactado={(t) => setValue("dificultades_encontradas", t, { shouldDirty: true })}
+          />
         </Campo>
       </div>
 
       <Campo label="Observaciones de conducta">
         <Textarea {...register("observaciones_conducta")} />
+        <RedactarBoton
+          valor={watch("observaciones_conducta") ?? ""}
+          contexto="Nota de sesión clínica: observaciones de conducta"
+          onRedactado={(t) => setValue("observaciones_conducta", t, { shouldDirty: true })}
+        />
       </Campo>
       <Campo label="Plan para la siguiente sesión">
         <Textarea {...register("plan_siguiente_sesion")} />
+        <RedactarBoton
+          valor={watch("plan_siguiente_sesion") ?? ""}
+          contexto="Nota de sesión clínica: plan para la siguiente sesión"
+          onRedactado={(t) => setValue("plan_siguiente_sesion", t, { shouldDirty: true })}
+        />
       </Campo>
       <Campo label="Recomendaciones para casa (visible en el portal de padres)">
         <Textarea {...register("recomendaciones_casa")} />
+        <RedactarBoton
+          valor={watch("recomendaciones_casa") ?? ""}
+          contexto="Recomendaciones para casa dirigidas a los padres, tono cercano y profesional"
+          onRedactado={(t) => setValue("recomendaciones_casa", t, { shouldDirty: true })}
+        />
       </Campo>
 
       <label className="flex items-center gap-2 text-sm font-semibold text-luda-gris">
@@ -342,6 +402,8 @@ export function SesionesTab({ paciente }: { paciente: PacienteDetalle }) {
         className="max-w-2xl"
       >
         <SesionForm
+          pacienteId={paciente.id}
+          sesionId={editando?.id}
           psicologoSugerido={paciente.psicologo_asignado_id ?? undefined}
           inicial={editando ? sesionAInput(editando) : undefined}
           guardando={crear.isPending || actualizar.isPending}

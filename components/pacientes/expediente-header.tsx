@@ -139,6 +139,7 @@ export function ExpedienteHeader({ paciente }: { paciente: PacienteDetalle }) {
         className="max-w-2xl"
       >
         <SesionForm
+          pacienteId={paciente.id}
           psicologoSugerido={paciente.psicologo_asignado_id ?? undefined}
           guardando={crearSesion.isPending}
           onGuardar={guardarNota}

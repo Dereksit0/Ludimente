@@ -15,8 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useDraftState } from "@/hooks/use-form-draft";
 import {
   useActualizarObjetivo,
   useActualizarPlan,
@@ -256,6 +258,19 @@ function ModalEditarPlan({
     plan.fecha_fin_estimada?.slice(0, 10) ?? "",
   );
 
+  const { limpiar } = useDraftState({
+    clave: `draft:plan:${plan.id}`,
+    activo: true,
+    valores: { titulo, diagnostico, descripcion, fechaInicio, fechaFin },
+    onRestaurar: (b) => {
+      setTitulo(b.titulo);
+      setDiagnostico(b.diagnostico);
+      setDescripcion(b.descripcion);
+      setFechaInicio(b.fechaInicio);
+      setFechaFin(b.fechaFin);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!titulo.trim()) {
@@ -270,6 +285,7 @@ function ModalEditarPlan({
         fecha_inicio: fechaInicio,
         fecha_fin_estimada: fechaFin || null,
       });
+      limpiar();
       toast.success("Plan actualizado");
       onCerrar();
     } catch {
@@ -323,6 +339,11 @@ function ModalEditarPlan({
             id="edit-descripcion"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
+          />
+          <RedactarBoton
+            valor={descripcion}
+            contexto="Descripción de un plan de intervención clínica infantil"
+            onRedactado={setDescripcion}
           />
         </div>
         <div className="flex justify-end gap-2 pt-1">
@@ -498,6 +519,19 @@ function ModalEditarObjetivo({
     objetivo.fecha_meta?.slice(0, 10) ?? "",
   );
 
+  const { limpiar } = useDraftState({
+    clave: `draft:objetivo:${objetivo.id}`,
+    activo: true,
+    valores: { descripcion, area, prioridad, estatus, fechaMeta },
+    onRestaurar: (b) => {
+      setDescripcion(b.descripcion);
+      setArea(b.area);
+      setPrioridad(b.prioridad);
+      setEstatus(b.estatus);
+      setFechaMeta(b.fechaMeta);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!descripcion.trim()) {
@@ -515,6 +549,7 @@ function ModalEditarObjetivo({
           fecha_meta: fechaMeta || null,
         },
       });
+      limpiar();
       toast.success("Objetivo actualizado");
       onCerrar();
     } catch {
@@ -532,6 +567,11 @@ function ModalEditarObjetivo({
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
             required
+          />
+          <RedactarBoton
+            valor={descripcion}
+            contexto="Descripción de un objetivo de plan de intervención clínica infantil, debe ser concreto y medible"
+            onRedactado={setDescripcion}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -631,6 +671,18 @@ function ModalAgregarObjetivo({
   const [prioridad, setPrioridad] = useState<PrioridadObjetivo>("media");
   const [fechaMeta, setFechaMeta] = useState("");
 
+  const { limpiar } = useDraftState({
+    clave: `draft:objetivo:nuevo:${planId}`,
+    activo: true,
+    valores: { descripcion, area, prioridad, fechaMeta },
+    onRestaurar: (b) => {
+      setDescripcion(b.descripcion);
+      setArea(b.area);
+      setPrioridad(b.prioridad);
+      setFechaMeta(b.fechaMeta);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const val = objetivoSchema.safeParse({ descripcion });
@@ -645,6 +697,7 @@ function ModalAgregarObjetivo({
         prioridad,
         fecha_meta: fechaMeta || null,
       });
+      limpiar();
       toast.success("Objetivo agregado");
       onCerrar();
     } catch {
@@ -663,6 +716,11 @@ function ModalAgregarObjetivo({
             onChange={(e) => setDescripcion(e.target.value)}
             placeholder="Ej. Leer palabras de 3 sílabas con 80% de precisión"
             required
+          />
+          <RedactarBoton
+            valor={descripcion}
+            contexto="Descripción de un objetivo de plan de intervención clínica infantil, debe ser concreto y medible"
+            onRedactado={setDescripcion}
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -732,10 +790,21 @@ function ModalRegistrarAvance({
   const [progreso, setProgreso] = useState(progresoActual);
   const [nota, setNota] = useState("");
 
+  const { limpiar } = useDraftState({
+    clave: `draft:avance:${objetivoId}`,
+    activo: true,
+    valores: { progreso, nota },
+    onRestaurar: (b) => {
+      setProgreso(b.progreso);
+      setNota(b.nota);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     try {
       await registrar.mutateAsync({ objetivoId, progreso, nota });
+      limpiar();
       toast.success("Avance registrado");
       onCerrar();
     } catch {
@@ -767,6 +836,11 @@ function ModalRegistrarAvance({
             value={nota}
             onChange={(e) => setNota(e.target.value)}
             placeholder="¿Qué se observó en esta sesión?"
+          />
+          <RedactarBoton
+            valor={nota}
+            contexto="Nota de avance de un objetivo de plan de intervención"
+            onRedactado={setNota}
           />
         </div>
         <div className="flex justify-end gap-2 pt-1">

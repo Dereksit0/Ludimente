@@ -10,6 +10,7 @@ import {
   FileText,
   LineChart,
   LogOut,
+  Package,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import {
   obtenerConsentimientos,
   obtenerDocumentos,
   obtenerPagos,
+  obtenerPaqueteActivo,
   obtenerPlanActivo,
   obtenerProximasCitas,
   obtenerRecursosParaFamilia,
@@ -83,6 +85,7 @@ export default async function PortalInicioPage() {
     plan,
     solicitudes,
     recursos,
+    paquete,
   ] = await Promise.all([
     obtenerAvances(sesion.pid),
     obtenerProximasCitas(sesion.pid),
@@ -93,6 +96,7 @@ export default async function PortalInicioPage() {
     obtenerPlanActivo(sesion.pid),
     obtenerSolicitudesCita(sesion.pid),
     obtenerRecursosParaFamilia(sesion.pid),
+    obtenerPaqueteActivo(sesion.pid),
   ]);
 
   return (
@@ -123,6 +127,53 @@ export default async function PortalInicioPage() {
       <div className="mx-auto max-w-4xl space-y-6 px-6 py-8">
         {/* Próximas citas (confirmar / solicitar) */}
         <PortalCitas citas={citas} solicitudes={solicitudes} />
+
+        {/* Paquete de sesiones */}
+        <LudaCard>
+          <LudaCardHeader>
+            <LudaCardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-luda-lila-dark" /> Paquete de
+              sesiones
+            </LudaCardTitle>
+          </LudaCardHeader>
+          <LudaCardContent>
+            {paquete ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-bold text-luda-gris">
+                    {paquete.nombre}
+                  </p>
+                  <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                    Activo
+                  </span>
+                </div>
+                <p className="text-sm text-luda-gris-light">
+                  {paquete.sesionesRestantes} de {paquete.sesionesTotales}{" "}
+                  sesiones disponibles
+                </p>
+                <div className="h-1.5 overflow-hidden rounded-full bg-luda-lila-light">
+                  <div
+                    className="h-full rounded-full bg-luda-lila"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.round(
+                          (paquete.sesionesUsadas / paquete.sesionesTotales) *
+                            100,
+                        ),
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-luda-gris-light">
+                No tienes un paquete de sesiones activo en este momento.
+                Contáctanos si quieres contratar uno.
+              </p>
+            )}
+          </LudaCardContent>
+        </LudaCard>
 
         {/* Plan de intervención */}
         {plan && (

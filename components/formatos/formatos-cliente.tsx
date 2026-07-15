@@ -16,6 +16,7 @@ import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import { SugerenciaPlanBoton } from "@/components/planes/sugerencia-plan-boton";
 import { useConfiguracion } from "@/hooks/use-configuracion";
+import { useDraftState } from "@/hooks/use-form-draft";
 import {
   useFormatosLlenados,
   useGuardarFormatoLlenado,
@@ -246,6 +247,16 @@ function ModalLlenar({
     ? `${pacienteNombre.nombre} ${pacienteNombre.apellido_paterno}`
     : undefined;
 
+  const { limpiar } = useDraftState({
+    clave: `draft:formato:${formato.id}:${inicial?.id ?? "nuevo"}`,
+    activo: true,
+    valores: { pacienteId, valores },
+    onRestaurar: (b) => {
+      setPacienteId(b.pacienteId);
+      setValores(b.valores);
+    },
+  });
+
   function set(key: string, valor: unknown) {
     setValores((prev) => ({ ...prev, [key]: valor }));
   }
@@ -263,6 +274,7 @@ function ModalLlenar({
         titulo: formato.titulo,
         respuestas: valores,
       });
+      limpiar();
       toast.success("Formato guardado");
       if (imprimir) imprimirFormato(formato, config, valores, nombreStr);
       if (esEntrevistaInicial) {

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { LudaCard } from "@/components/ui/luda-card";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { useCrearPaciente } from "@/hooks/use-pacientes";
 import { cn } from "@/lib/utils";
 import {
@@ -82,6 +83,13 @@ export function FormNuevoPaciente() {
 
   const esUltimo = paso === PASOS.length - 1;
 
+  const { limpiar } = useFormDraft({
+    clave: "draft:nuevo-paciente",
+    activo: true,
+    watch: methods.watch,
+    reset: methods.reset,
+  });
+
   async function siguiente() {
     const valido = await methods.trigger(PASOS[paso]!.campos);
     if (valido) setPaso((p) => Math.min(p + 1, PASOS.length - 1));
@@ -90,6 +98,7 @@ export function FormNuevoPaciente() {
   function onSubmit(datos: NuevoPacienteInput) {
     crear.mutate(datos, {
       onSuccess: (id) => {
+        limpiar();
         toast.success("Paciente registrado ⭐");
         router.push(`/pacientes/${id}`);
       },

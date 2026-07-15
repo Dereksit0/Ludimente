@@ -1,6 +1,7 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Textarea } from "@/components/ui/textarea";
 import type { Formato } from "@/lib/formatos/plantillas-formato";
 import type { RespuestasFormato } from "@/lib/print-formato";
@@ -56,6 +57,11 @@ export function FormatoFiller({
                       value={typeof val === "string" ? val : ""}
                       onChange={(e) => onChange(key, e.target.value)}
                       className="min-h-[70px]"
+                    />
+                    <RedactarBoton
+                      valor={typeof val === "string" ? val : ""}
+                      contexto={`Formato clínico "${c.label ?? ""}"`}
+                      onRedactado={(t) => onChange(key, t)}
                     />
                   </div>
                 );

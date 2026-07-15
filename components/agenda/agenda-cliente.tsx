@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { LudaBadge } from "@/components/ui/luda-badge";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -452,6 +453,7 @@ export function AgendaCliente() {
           </div>
         )}
         <CitaForm
+          citaId={editando?.id}
           inicial={editando ? citaAInput(editando) : inicialNueva}
           guardando={crear.isPending || actualizar.isPending}
           onGuardar={guardar}
@@ -588,6 +590,11 @@ export function AgendaCliente() {
             }
             autoFocus
           />
+          <RedactarBoton
+            valor={motivoTexto}
+            contexto="Motivo de cancelación o inasistencia a una cita"
+            onRedactado={setMotivoTexto}
+          />
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setMotivoPara(null)}>
               Cerrar
@@ -612,6 +619,7 @@ export function AgendaCliente() {
       >
         {notaPara && (
           <SesionForm
+            pacienteId={notaPara.paciente_id}
             psicologoSugerido={notaPara.psicologo_id}
             citaId={notaPara.id}
             inicial={{ fecha_sesion: format(new Date(notaPara.fecha_inicio), "yyyy-MM-dd") }}

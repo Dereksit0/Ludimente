@@ -7,13 +7,17 @@ import { useForm } from "react-hook-form";
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { NIVELES_ESTUDIOS, PARENTESCOS } from "@/lib/catalogos";
 import { tutorSchema, type TutorInput } from "@/lib/validations/paciente.schema";
 
 interface TutorFormProps {
   inicial?: Partial<TutorInput>;
+  pacienteId?: string;
+  tutorId?: string;
   guardando: boolean;
   onGuardar: (valores: TutorInput) => void;
 }
@@ -31,18 +35,39 @@ const vacio: TutorInput = {
   notas: "",
 };
 
-export function TutorForm({ inicial, guardando, onGuardar }: TutorFormProps) {
+export function TutorForm({
+  inicial,
+  pacienteId,
+  tutorId,
+  guardando,
+  onGuardar,
+}: TutorFormProps) {
   const {
     register,
     handleSubmit,
+    watch,
+    reset,
+    setValue,
     formState: { errors },
   } = useForm<TutorInput>({
     resolver: zodResolver(tutorSchema),
     defaultValues: { ...vacio, ...inicial },
   });
 
+  const { limpiar } = useFormDraft({
+    clave: `draft:tutor:${pacienteId ?? "sin-paciente"}:${tutorId ?? "nuevo"}`,
+    activo: true,
+    watch,
+    reset,
+  });
+
+  function submit(v: TutorInput) {
+    limpiar();
+    onGuardar(v);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Campo label="Nombre completo" requerido error={errors.nombre_completo?.message} className="sm:col-span-2">
           <Input {...register("nombre_completo")} />
@@ -83,6 +108,11 @@ export function TutorForm({ inicial, guardando, onGuardar }: TutorFormProps) {
 
       <Campo label="Notas">
         <Textarea {...register("notas")} />
+        <RedactarBoton
+          valor={watch("notas") ?? ""}
+          contexto="Notas sobre un tutor/padre de familia en el expediente del paciente"
+          onRedactado={(t) => setValue("notas", t, { shouldDirty: true })}
+        />
       </Campo>
 
       <div className="flex flex-wrap gap-4">

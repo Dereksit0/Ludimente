@@ -291,6 +291,37 @@ export async function obtenerRecursosParaFamilia(
   }));
 }
 
+export interface PortalPaquete {
+  nombre: string;
+  sesionesTotales: number;
+  sesionesUsadas: number;
+  sesionesRestantes: number;
+}
+
+/** Paquete de sesiones vigente (con sesiones disponibles), si tiene uno. */
+export async function obtenerPaqueteActivo(
+  pacienteId: string,
+): Promise<PortalPaquete | null> {
+  const db = createAdminClient();
+  const { data: paquetes } = await db
+    .from("paquetes_paciente")
+    .select("nombre, sesiones_totales, sesiones_usadas, created_at")
+    .eq("paciente_id", pacienteId)
+    .order("created_at", { ascending: false });
+
+  const activo = (paquetes ?? []).find(
+    (p) => p.sesiones_totales - p.sesiones_usadas > 0,
+  );
+  if (!activo) return null;
+
+  return {
+    nombre: activo.nombre,
+    sesionesTotales: activo.sesiones_totales,
+    sesionesUsadas: activo.sesiones_usadas,
+    sesionesRestantes: activo.sesiones_totales - activo.sesiones_usadas,
+  };
+}
+
 export async function obtenerPagos(pacienteId: string): Promise<PortalPago[]> {
   const db = createAdminClient();
   const { data } = await db

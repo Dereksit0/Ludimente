@@ -171,6 +171,7 @@ export function EvaluacionesTab({ paciente }: { paciente: PacienteDetalle }) {
         className="max-w-2xl"
       >
         <EvaluacionForm
+          evaluacionId={editId ?? undefined}
           pacienteFijo={paciente.id}
           psicologoSugerido={paciente.psicologo_asignado_id ?? undefined}
           inicial={inicial}

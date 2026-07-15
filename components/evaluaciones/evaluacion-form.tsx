@@ -9,9 +9,11 @@ import { sugerirInterpretacion } from "@/lib/interpretacion";
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { TagsInput } from "@/components/ui/tags-input";
 import { Textarea } from "@/components/ui/textarea";
+import { useFormDraft } from "@/hooks/use-form-draft";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { usePsicologos } from "@/hooks/use-perfiles";
 import {
@@ -26,6 +28,7 @@ import {
 
 interface Props {
   inicial?: Partial<EvaluacionInput>;
+  evaluacionId?: string;
   pacienteFijo?: string;
   psicologoSugerido?: string;
   guardando: boolean;
@@ -34,6 +37,7 @@ interface Props {
 
 export function EvaluacionForm({
   inicial,
+  evaluacionId,
   pacienteFijo,
   psicologoSugerido,
   guardando,
@@ -48,6 +52,8 @@ export function EvaluacionForm({
     handleSubmit,
     getValues,
     setValue,
+    watch,
+    reset,
     formState: { errors },
   } = useForm<EvaluacionInput>({
     resolver: zodResolver(evaluacionSchema),
@@ -75,8 +81,20 @@ export function EvaluacionForm({
     name: "subpruebas",
   });
 
+  const { limpiar } = useFormDraft({
+    clave: `draft:evaluacion:${pacienteFijo ?? inicial?.paciente_id ?? "sin-paciente"}:${evaluacionId ?? "nueva"}`,
+    activo: true,
+    watch,
+    reset,
+  });
+
+  function submit(v: EvaluacionInput) {
+    limpiar();
+    onGuardar(v);
+  }
+
   return (
-    <form onSubmit={handleSubmit(onGuardar)} className="space-y-4">
+    <form onSubmit={handleSubmit(submit)} className="space-y-4">
       {!pacienteFijo && (
         <Campo label="Paciente" requerido error={errors.paciente_id?.message}>
           <Select {...register("paciente_id")}>
@@ -239,9 +257,19 @@ export function EvaluacionForm({
           </Button>
         </div>
         <Textarea {...register("interpretacion_cualitativa")} rows={4} />
+        <RedactarBoton
+          valor={watch("interpretacion_cualitativa") ?? ""}
+          contexto="Interpretación cualitativa de una evaluación psicométrica infantil"
+          onRedactado={(t) => setValue("interpretacion_cualitativa", t, { shouldDirty: true })}
+        />
       </Campo>
       <Campo label="Recomendaciones">
         <Textarea {...register("recomendaciones")} rows={3} />
+        <RedactarBoton
+          valor={watch("recomendaciones") ?? ""}
+          contexto="Recomendaciones de una evaluación psicométrica infantil"
+          onRedactado={(t) => setValue("recomendaciones", t, { shouldDirty: true })}
+        />
       </Campo>
 
       <Button type="submit" className="w-full" disabled={guardando}>

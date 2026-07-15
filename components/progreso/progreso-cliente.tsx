@@ -22,9 +22,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfiguracion } from "@/hooks/use-configuracion";
+import { useDraftState } from "@/hooks/use-form-draft";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { usePlanes } from "@/hooks/use-planes";
 import {
@@ -220,6 +222,20 @@ function ModalEditarReporte({
     reporte.recomendaciones ?? "",
   );
 
+  const { limpiar } = useDraftState({
+    clave: `draft:reporte:${reporte.id}`,
+    activo: true,
+    valores: { titulo, inicio, fin, resumen, logros, recomendaciones },
+    onRestaurar: (b) => {
+      setTitulo(b.titulo);
+      setInicio(b.inicio);
+      setFin(b.fin);
+      setResumen(b.resumen);
+      setLogros(b.logros);
+      setRecomendaciones(b.recomendaciones);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!titulo.trim()) {
@@ -235,6 +251,7 @@ function ModalEditarReporte({
         logros: logros.trim() || null,
         recomendaciones: recomendaciones.trim() || null,
       });
+      limpiar();
       toast.success("Reporte actualizado");
       onCerrar();
     } catch {
@@ -281,6 +298,11 @@ function ModalEditarReporte({
             value={resumen}
             onChange={(e) => setResumen(e.target.value)}
           />
+          <RedactarBoton
+            valor={resumen}
+            contexto="Reporte de progreso para padres: resumen del periodo"
+            onRedactado={setResumen}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="edit-logros">Logros destacados (opcional)</Label>
@@ -289,6 +311,11 @@ function ModalEditarReporte({
             value={logros}
             onChange={(e) => setLogros(e.target.value)}
           />
+          <RedactarBoton
+            valor={logros}
+            contexto="Reporte de progreso para padres: logros destacados"
+            onRedactado={setLogros}
+          />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="edit-reco">Recomendaciones para casa (opcional)</Label>
@@ -296,6 +323,11 @@ function ModalEditarReporte({
             id="edit-reco"
             value={recomendaciones}
             onChange={(e) => setRecomendaciones(e.target.value)}
+          />
+          <RedactarBoton
+            valor={recomendaciones}
+            contexto="Reporte de progreso para padres: recomendaciones para casa"
+            onRedactado={setRecomendaciones}
           />
         </div>
         <div className="flex justify-end gap-2 pt-1">
@@ -338,6 +370,22 @@ function ModalNuevoReporte({
     [planes, pacienteId],
   );
 
+  const { limpiar } = useDraftState({
+    clave: `draft:reporte:nuevo:${pacienteInicial ?? "sin-paciente"}`,
+    activo: true,
+    valores: { pacienteId, planId, titulo, inicio, fin, resumen, logros, recomendaciones },
+    onRestaurar: (b) => {
+      setPacienteId(b.pacienteId);
+      setPlanId(b.planId);
+      setTitulo(b.titulo);
+      setInicio(b.inicio);
+      setFin(b.fin);
+      setResumen(b.resumen);
+      setLogros(b.logros);
+      setRecomendaciones(b.recomendaciones);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const val = reporteSchema.safeParse({
@@ -361,6 +409,7 @@ function ModalNuevoReporte({
         logros: logros.trim() || null,
         recomendaciones: recomendaciones.trim() || null,
       });
+      limpiar();
       toast.success("Reporte creado");
       onCerrar();
     } catch {
@@ -452,6 +501,11 @@ function ModalNuevoReporte({
             onChange={(e) => setResumen(e.target.value)}
             placeholder="Evolución general del niño/a durante el periodo…"
           />
+          <RedactarBoton
+            valor={resumen}
+            contexto="Reporte de progreso para padres: resumen del periodo"
+            onRedactado={setResumen}
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -461,6 +515,11 @@ function ModalNuevoReporte({
             value={logros}
             onChange={(e) => setLogros(e.target.value)}
           />
+          <RedactarBoton
+            valor={logros}
+            contexto="Reporte de progreso para padres: logros destacados"
+            onRedactado={setLogros}
+          />
         </div>
 
         <div className="space-y-1.5">
@@ -469,6 +528,11 @@ function ModalNuevoReporte({
             id="reco"
             value={recomendaciones}
             onChange={(e) => setRecomendaciones(e.target.value)}
+          />
+          <RedactarBoton
+            valor={recomendaciones}
+            contexto="Reporte de progreso para padres: recomendaciones para casa"
+            onRedactado={setRecomendaciones}
           />
         </div>
 

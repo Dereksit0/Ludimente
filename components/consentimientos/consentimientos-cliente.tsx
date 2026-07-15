@@ -13,9 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfiguracion } from "@/hooks/use-configuracion";
+import { useDraftState } from "@/hooks/use-form-draft";
 import {
   useConsentimientos,
   useCrearConsentimiento,
@@ -233,6 +235,19 @@ function ModalNuevo({
     setRequiereDecision(TIPO_CONSENTIMIENTO_REQUIERE_DECISION[nuevo] ?? false);
   }
 
+  const { limpiar } = useDraftState({
+    clave: `draft:consentimiento:${pacienteInicial ?? "sin-paciente"}`,
+    activo: true,
+    valores: { pacienteId, tipo, titulo, contenido, requiereDecision },
+    onRestaurar: (b) => {
+      setPacienteId(b.pacienteId);
+      setTipo(b.tipo);
+      setTitulo(b.titulo);
+      setContenido(b.contenido);
+      setRequiereDecision(b.requiereDecision);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const val = consentimientoSchema.safeParse({ paciente_id: pacienteId, titulo });
@@ -248,6 +263,7 @@ function ModalNuevo({
         contenido: contenido.trim() || null,
         requiere_decision: requiereDecision,
       });
+      limpiar();
       toast.success("Consentimiento creado");
       onCerrar();
     } catch {
@@ -310,6 +326,11 @@ function ModalNuevo({
             value={contenido}
             onChange={(e) => setContenido(e.target.value)}
             className="min-h-[140px]"
+          />
+          <RedactarBoton
+            valor={contenido}
+            contexto="Texto legal de un consentimiento informado: conserva el sentido legal exacto, solo mejora la redacción"
+            onRedactado={setContenido}
           />
         </div>
 

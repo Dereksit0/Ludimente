@@ -23,8 +23,10 @@ import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { LudaStat } from "@/components/ui/luda-stat";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useDraftState } from "@/hooks/use-form-draft";
 import {
   useActualizarGasto,
   useCrearGasto,
@@ -279,6 +281,21 @@ function ModalEditarGasto({
   const [proveedor, setProveedor] = useState(gasto.proveedor ?? "");
   const [notas, setNotas] = useState(gasto.notas ?? "");
 
+  const { limpiar } = useDraftState({
+    clave: `draft:gasto:${gasto.id}`,
+    activo: true,
+    valores: { concepto, categoria, monto, fecha, metodo, proveedor, notas },
+    onRestaurar: (b) => {
+      setConcepto(b.concepto);
+      setCategoria(b.categoria);
+      setMonto(b.monto);
+      setFecha(b.fecha);
+      setMetodo(b.metodo);
+      setProveedor(b.proveedor);
+      setNotas(b.notas);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const m = Number(monto);
@@ -300,6 +317,7 @@ function ModalEditarGasto({
           notas: notas.trim() || null,
         },
       });
+      limpiar();
       toast.success("Gasto actualizado");
       onCerrar();
     } catch {
@@ -387,6 +405,7 @@ function ModalEditarGasto({
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
           />
+          <RedactarBoton valor={notas} contexto="Nota de un gasto administrativo" onRedactado={setNotas} />
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onCerrar}>
@@ -411,6 +430,21 @@ function ModalNuevoGasto({ onCerrar }: { onCerrar: () => void }) {
   const [proveedor, setProveedor] = useState("");
   const [notas, setNotas] = useState("");
 
+  const { limpiar } = useDraftState({
+    clave: "draft:gasto:nuevo",
+    activo: true,
+    valores: { concepto, categoria, monto, fecha, metodo, proveedor, notas },
+    onRestaurar: (b) => {
+      setConcepto(b.concepto);
+      setCategoria(b.categoria);
+      setMonto(b.monto);
+      setFecha(b.fecha);
+      setMetodo(b.metodo);
+      setProveedor(b.proveedor);
+      setNotas(b.notas);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const m = Number(monto);
@@ -429,6 +463,7 @@ function ModalNuevoGasto({ onCerrar }: { onCerrar: () => void }) {
         proveedor: proveedor.trim() || null,
         notas: notas.trim() || null,
       });
+      limpiar();
       toast.success("Gasto registrado");
       onCerrar();
     } catch {
@@ -518,6 +553,7 @@ function ModalNuevoGasto({ onCerrar }: { onCerrar: () => void }) {
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
           />
+          <RedactarBoton valor={notas} contexto="Nota de un gasto administrativo" onRedactado={setNotas} />
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="ghost" onClick={onCerrar}>

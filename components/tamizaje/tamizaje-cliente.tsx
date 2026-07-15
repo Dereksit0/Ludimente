@@ -22,10 +22,12 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useConfiguracion } from "@/hooks/use-configuracion";
+import { useDraftState } from "@/hooks/use-form-draft";
 import { usePacientes } from "@/hooks/use-pacientes";
 import { usePsicologos } from "@/hooks/use-perfiles";
 import {
@@ -493,6 +495,19 @@ function ModalTamizaje({
   const setArea = (k: string, v: string) =>
     setAreas((prev) => ({ ...prev, [k]: v }));
 
+  const { limpiar } = useDraftState({
+    clave: `draft:tamizaje:${inicial?.id ?? "nueva"}:${pacienteFijo ?? ""}`,
+    activo: true,
+    valores: { pacienteId, evaluadorId, fecha, observaciones, areas },
+    onRestaurar: (b) => {
+      setPacienteId(b.pacienteId);
+      setEvaluadorId(b.evaluadorId);
+      setFecha(b.fecha);
+      setObservaciones(b.observaciones);
+      setAreas(b.areas);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     if (!pacienteId) {
@@ -514,6 +529,7 @@ function ModalTamizaje({
         await crear.mutateAsync(payload);
         toast.success("Tamizaje guardado");
       }
+      limpiar();
       onCerrar();
     } catch {
       toast.error("No se pudo guardar (revisa permisos: admin o terapeuta)");
@@ -605,6 +621,11 @@ function ModalTamizaje({
             id="obs"
             value={observaciones}
             onChange={(e) => setObservaciones(e.target.value)}
+          />
+          <RedactarBoton
+            valor={observaciones}
+            contexto="Observaciones de un tamizaje inicial clínico infantil"
+            onRedactado={setObservaciones}
           />
         </div>
 

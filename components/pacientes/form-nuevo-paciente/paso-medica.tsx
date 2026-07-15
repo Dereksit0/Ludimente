@@ -4,6 +4,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { TagsInput } from "@/components/ui/tags-input";
 import { Textarea } from "@/components/ui/textarea";
 import { DIAGNOSTICOS_COMUNES } from "@/lib/catalogos";
@@ -81,6 +82,11 @@ export function PasoMedica() {
             }
           />
           <Textarea id="alergias" {...register("alergias")} />
+          <RedactarBoton
+            valor={watch("alergias") ?? ""}
+            contexto="Alergias del paciente en su expediente médico"
+            onRedactado={(t) => setValue("alergias", t, { shouldDirty: true })}
+          />
         </Campo>
         <Campo label="Medicamentos actuales" htmlFor="medicamentos">
           <BotonNoAplica
@@ -94,6 +100,11 @@ export function PasoMedica() {
             }
           />
           <Textarea id="medicamentos" {...register("medicamentos")} />
+          <RedactarBoton
+            valor={watch("medicamentos") ?? ""}
+            contexto="Medicamentos actuales del paciente en su expediente médico"
+            onRedactado={(t) => setValue("medicamentos", t, { shouldDirty: true })}
+          />
         </Campo>
       </div>
 
@@ -102,6 +113,11 @@ export function PasoMedica() {
           id="informacion_medica"
           placeholder="Antecedentes, condiciones a considerar, etc."
           {...register("informacion_medica")}
+        />
+        <RedactarBoton
+          valor={watch("informacion_medica") ?? ""}
+          contexto="Información médica relevante del paciente en su expediente"
+          onRedactado={(t) => setValue("informacion_medica", t, { shouldDirty: true })}
         />
       </Campo>
     </div>

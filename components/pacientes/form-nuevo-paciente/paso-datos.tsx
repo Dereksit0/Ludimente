@@ -4,6 +4,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { Campo } from "@/components/pacientes/form-nuevo-paciente/campo";
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { GRADOS_ESCOLARES, SEXO_OPCIONES, TURNO_OPCIONES } from "@/lib/catalogos";
@@ -93,11 +94,18 @@ export function PasoDatos() {
           control={control}
           name="motivo_consulta"
           render={({ field }) => (
-            <Textarea
-              id="motivo_consulta"
-              placeholder="¿Qué motiva la consulta? Describe brevemente la situación."
-              {...field}
-            />
+            <>
+              <Textarea
+                id="motivo_consulta"
+                placeholder="¿Qué motiva la consulta? Describe brevemente la situación."
+                {...field}
+              />
+              <RedactarBoton
+                valor={field.value ?? ""}
+                contexto="Motivo de consulta al registrar un nuevo paciente"
+                onRedactado={field.onChange}
+              />
+            </>
           )}
         />
       </Campo>

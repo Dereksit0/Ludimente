@@ -11,8 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LudaCard } from "@/components/ui/luda-card";
 import { Modal } from "@/components/ui/modal";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useDraftState } from "@/hooks/use-form-draft";
 import {
   useActualizarRecurso,
   useCrearRecurso,
@@ -219,6 +221,21 @@ function ModalRecurso({
   const [archivo, setArchivo] = useState<File | null>(null);
   const [subiendo, setSubiendo] = useState(false);
 
+  const { limpiar } = useDraftState({
+    clave: `draft:recurso:${recurso?.id ?? "nuevo"}`,
+    activo: true,
+    valores: { titulo, categoria, descripcion, url, etiquetas, edadMin, edadMax },
+    onRestaurar: (b) => {
+      setTitulo(b.titulo);
+      setCategoria(b.categoria);
+      setDescripcion(b.descripcion);
+      setUrl(b.url);
+      setEtiquetas(b.etiquetas);
+      setEdadMin(b.edadMin);
+      setEdadMax(b.edadMax);
+    },
+  });
+
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     const val = recursoSchema.safeParse({
@@ -272,6 +289,7 @@ function ModalRecurso({
         await crear.mutateAsync(datos);
         toast.success("Recurso agregado");
       }
+      limpiar();
       onCerrar();
     } catch {
       toast.error("No se pudo guardar");
@@ -317,6 +335,11 @@ function ModalRecurso({
             id="descripcion"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
+          />
+          <RedactarBoton
+            valor={descripcion}
+            contexto="Descripción de un recurso de biblioteca para terapia infantil"
+            onRedactado={setDescripcion}
           />
         </div>
         <div className="space-y-1.5">

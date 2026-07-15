@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Check, Loader2, Pencil, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { RedactarBoton } from "@/components/ui/redactar-boton";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +76,10 @@ export function CampoEditable({
       {editando ? (
         <div className="mt-1 space-y-2">
           {tipo === "textarea" ? (
-            <Textarea value={local} onChange={(e) => setLocal(e.target.value)} autoFocus />
+            <>
+              <Textarea value={local} onChange={(e) => setLocal(e.target.value)} autoFocus />
+              <RedactarBoton valor={local} contexto={label} onRedactado={setLocal} />
+            </>
           ) : (
             <Input
               type={tipo}
